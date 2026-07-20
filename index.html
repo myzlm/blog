@@ -7,8 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --bg-deep: #0a0a0f;
@@ -57,8 +56,7 @@
         }
         body::before {
             content: '';
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 0;
             background:
                 repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.003) 2px, rgba(255,255,255,0.003) 4px),
@@ -272,7 +270,7 @@
 
         <div class="view active" id="viewList">
             <div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">
-                <button class="btn primary-btn hidden" id="newArticleBtn" style="display:none;">📝 撰写新篇</button>
+                <button class="btn primary-btn hidden" id="newArticleBtn">📝 撰写新篇</button>
             </div>
             <div class="articles-grid" id="articlesGrid"></div>
             <div class="empty-state hidden" id="emptyState">
@@ -347,13 +345,13 @@
 
     <script>
         (function() {
-            const API_BASE = 'https://myzlm.serveousercontent.com';
+            var API_BASE = 'https://myzlm.serveousercontent.com';
 
-            const $ = (sel) => document.querySelector(sel);
-            const $$ = (sel) => document.querySelectorAll(sel);
+            var $ = function(sel) { return document.querySelector(sel); };
+            var $$ = function(sel) { return document.querySelectorAll(sel); };
 
             function escapeHtml(text) {
-                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+                var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
                 return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
             }
 
@@ -439,17 +437,17 @@
                     logoutBtn.classList.remove('hidden');
                     if (currentUser.role === 'admin') {
                         adminBtn.classList.remove('hidden');
-                        newArticleBtn.style.display = 'inline-block';
+                        newArticleBtn.classList.remove('hidden');
                     } else {
                         adminBtn.classList.add('hidden');
-                        newArticleBtn.style.display = 'none';
+                        newArticleBtn.classList.add('hidden');
                     }
                 } else {
                     greeting.textContent = '未登录·过客';
                     loginBtn.classList.remove('hidden');
                     logoutBtn.classList.add('hidden');
                     adminBtn.classList.add('hidden');
-                    newArticleBtn.style.display = 'none';
+                    newArticleBtn.classList.add('hidden');
                 }
                 if (currentView === 'list') renderArticleList();
                 if (currentView === 'admin') renderAdminPanel();
@@ -473,7 +471,10 @@
 
             function switchView(view) {
                 currentView = view;
-                $$('.view').forEach(function(v) { v.classList.remove('active'); });
+                var views = $$('.view');
+                for (var i = 0; i < views.length; i++) {
+                    views[i].classList.remove('active');
+                }
                 var targetView = $('#view' + view.charAt(0).toUpperCase() + view.slice(1));
                 if (targetView) targetView.classList.add('active');
                 if (view === 'list') renderArticleList();
@@ -518,11 +519,14 @@
                 }
                 grid.innerHTML = html;
 
-                grid.querySelectorAll('.article-card').forEach(function(card) {
-                    card.addEventListener('click', function() {
-                        window._blogApp.viewArticle(this.dataset.id);
-                    });
-                });
+                // 使用事件委托处理文章点击
+                grid.onclick = function(e) {
+                    var card = e.target.closest('.article-card');
+                    if (card) {
+                        var id = card.dataset.id;
+                        if (id) viewArticle(id);
+                    }
+                };
             }
 
             async function viewArticle(id) {
@@ -568,13 +572,25 @@
                 html += '<span style="margin-left:auto;color:var(--vermillion);font-family:var(--font-calligraphy);font-size:1.2rem;">【' + escapeHtml(article.seal || '墨') + '】</span>';
                 html += '</div></div>';
                 html += '<div class="detail-content">' + contentHtml + '</div>';
-                html += '<div class="detail-actions">';
-                if (currentUser && currentUser.role === 'admin') {
-                    html += '<button class="btn btn-sm" onclick="window._blogApp.editArticle(\'' + escapeHtml(article.id) + '\')">✏️ 编辑</button>';
-                    html += '<button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle(\'' + escapeHtml(article.id) + '\', \'' + escapeHtml(article.title || '') + '\')">🗑️ 删除</button>';
-                }
-                html += '</div>';
+                html += '<div class="detail-actions"></div>';
                 container.innerHTML = html;
+
+                // 动态绑定编辑/删除按钮
+                var actionsDiv = container.querySelector('.detail-actions');
+                if (currentUser && currentUser.role === 'admin') {
+                    var editBtn = document.createElement('button');
+                    editBtn.className = 'btn btn-sm';
+                    editBtn.textContent = '✏️ 编辑';
+                    editBtn.onclick = function() { openArticleEditor(article.id); };
+                    actionsDiv.appendChild(editBtn);
+
+                    var delBtn = document.createElement('button');
+                    delBtn.className = 'btn btn-sm btn-danger';
+                    delBtn.textContent = '🗑️ 删除';
+                    delBtn.onclick = function() { confirmDeleteArticle(article.id, article.title); };
+                    actionsDiv.appendChild(delBtn);
+                }
+
                 container.dataset.loaded = 'true';
                 container.dataset.articleId = article.id;
             }
@@ -690,11 +706,21 @@
                     html += '<span class="item-date">' + formatDate(a.createdAt) + '</span>';
                     html += '</div>';
                     html += '<div class="item-actions">';
-                    html += '<button class="btn btn-sm" onclick="window._blogApp.editArticle(\'' + escapeHtml(a.id) + '\')">✏️</button>';
-                    html += '<button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle(\'' + escapeHtml(a.id) + '\', \'' + escapeHtml(a.title || '') + '\')">🗑️</button>';
+                    html += '<button class="btn btn-sm edit-btn" data-id="' + escapeHtml(a.id) + '">✏️</button>';
+                    html += '<button class="btn btn-sm btn-danger delete-btn" data-id="' + escapeHtml(a.id) + '" data-title="' + escapeHtml(a.title || '') + '">🗑️</button>';
                     html += '</div></div>';
                 }
                 container.innerHTML = html;
+
+                // 事件委托
+                container.onclick = function(e) {
+                    var target = e.target;
+                    if (target.classList.contains('edit-btn')) {
+                        openArticleEditor(target.dataset.id);
+                    } else if (target.classList.contains('delete-btn')) {
+                        confirmDeleteArticle(target.dataset.id, target.dataset.title);
+                    }
+                };
             }
 
             function initParticles() {
@@ -710,6 +736,7 @@
                 }
                 window.addEventListener('resize', resize);
                 resize();
+
                 function Particle() {
                     this.reset(true);
                 }
@@ -733,6 +760,7 @@
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                     ctx.fill();
                 };
+
                 for (var i = 0; i < 50; i++) {
                     particles.push(new Particle());
                 }
@@ -800,16 +828,22 @@
                     $('#confirmModal').classList.remove('active');
                     pendingDeleteId = null;
                 });
-                $$('.modal-overlay').forEach(function(ov) {
-                    ov.addEventListener('click', function(e) {
-                        if (e.target === this) this.classList.remove('active');
-                    });
-                });
+
+                var overlays = $$('.modal-overlay');
+                for (var i = 0; i < overlays.length; i++) {
+                    (function(ov) {
+                        ov.addEventListener('click', function(e) {
+                            if (e.target === ov) ov.classList.remove('active');
+                        });
+                    })(overlays[i]);
+                }
+
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
-                        $$('.modal-overlay.active').forEach(function(m) {
-                            m.classList.remove('active');
-                        });
+                        var activeModals = $$('.modal-overlay.active');
+                        for (var i = 0; i < activeModals.length; i++) {
+                            activeModals[i].classList.remove('active');
+                        }
                         pendingDeleteId = null;
                     }
                 });
