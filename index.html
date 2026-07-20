@@ -388,353 +388,203 @@
             var $ = function(s) { return document.querySelector(s); };
             var $$ = function(s) { return document.querySelectorAll(s); };
 
-            function escapeHtml(t) {
-                var m = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};
-                return String(t).replace(/[&<>"']/g, function(c){return m[c];});
-            }
-            function showToast(msg, type) {
-                var t = type || 'success';
-                var container = $('#toastContainer');
-                var toast = document.createElement('div');
-                toast.className = 'toast toast-' + t;
-                toast.textContent = msg;
-                container.appendChild(toast);
-                setTimeout(function(){ if(toast.parentNode) toast.remove(); }, 3000);
-            }
-            function formatDate(d) {
-                if(!d) return '';
-                var dt = new Date(d);
-                var ch = ['','元月','杏月','桃月','槐月','榴月','荷月','兰月','桂月','菊月','露月','葭月','腊月'];
-                var m = dt.getMonth() + 1;
-                var g = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-                var z = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-                return g[(dt.getFullYear()-4)%10] + z[(dt.getFullYear()-4)%12] + '年·' + (ch[m]||m+'月') + dt.getDate() + '日';
-            }
-            function calcReadTime(t) {
-                var w = (t||'').replace(/[^\u4e00-\u9fa5a-zA-Z]/g,'').length;
-                return Math.max(1, Math.round(w/400));
-            }
+            function escapeHtml(t) { var m = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return String(t).replace(/[&<>"']/g, function(c){return m[c];}); }
+            function showToast(msg, type) { var t = type || 'success'; var c = $('#toastContainer'); var d = document.createElement('div'); d.className = 'toast toast-' + t; d.textContent = msg; c.appendChild(d); setTimeout(function(){ if(d.parentNode) d.remove(); }, 3000); }
+            function formatDate(d) { if(!d) return ''; var dt = new Date(d); var ch = ['','元月','杏月','桃月','槐月','榴月','荷月','兰月','桂月','菊月','露月','葭月','腊月']; var m = dt.getMonth() + 1; var g = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']; var z = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return g[(dt.getFullYear()-4)%10] + z[(dt.getFullYear()-4)%12] + '年·' + (ch[m]||m+'月') + dt.getDate() + '日'; }
+            function calcReadTime(t) { var w = (t||'').replace(/[^\u4e00-\u9fa5a-zA-Z]/g,'').length; return Math.max(1, Math.round(w/400)); }
 
-            var currentUser = null;
-            var articles = [];
-            var pendingApps = [];
-            var currentView = 'list';
-            var pendingDeleteId = null;
-            var activeTag = null;
-            var showReview = false;
+            var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null, showReview = false;
 
             async function apiCall(url, opt, silent) {
                 opt = opt || {}; silent = silent || false;
-                var config = { credentials: 'include', headers: {'Content-Type':'application/json'} };
+                var config = { credentials:'include', headers:{'Content-Type':'application/json'} };
                 if (opt.method) config.method = opt.method;
                 if (opt.body && typeof opt.body === 'object') config.body = JSON.stringify(opt.body);
                 try {
                     var res = await fetch(API_BASE + url, config);
-                    if (!res.ok) {
-                        if (silent) return null;
-                        var d = await res.json().catch(function(){return{};});
-                        throw new Error(d.error || '请求失败 (' + res.status + ')');
-                    }
+                    if (!res.ok) { if(silent) return null; var d = await res.json().catch(function(){return{};}); throw new Error(d.error || '请求失败 (' + res.status + ')'); }
                     var txt = await res.text();
                     return txt ? JSON.parse(txt) : null;
-                } catch(e) {
-                    if (silent) return null;
-                    throw e;
-                }
+                } catch(e) { if(silent) return null; throw e; }
             }
 
-            async function checkLogin() {
-                var data = await apiCall('/api/me', {}, true);
-                currentUser = (data && data.username) ? data : null;
-                updateUI();
-            }
+            async function checkLogin() { var data = await apiCall('/api/me',{},true); currentUser = (data && data.username) ? data : null; updateUI(); }
 
             function updateUI() {
-                var g = $('#greetingText'),
-                    l = $('#loginBtn'),
-                    o = $('#logoutBtn'),
-                    a = $('#adminPanelBtn'),
-                    n = $('#newArticleBtn'),
-                    ap = $('#applyArticleBtn');
+                var g = $('#greetingText'), l = $('#loginBtn'), o = $('#logoutBtn'), a = $('#adminPanelBtn'),
+                    n = $('#newArticleBtn'), ap = $('#applyArticleBtn');
                 if (currentUser) {
                     g.textContent = (currentUser.role === 'admin' ? '🔰' : '📖') + ' ' + currentUser.username;
                     l.classList.add('hidden'); o.classList.remove('hidden');
                     if (currentUser.role === 'admin') {
-                        a.classList.remove('hidden'); n.style.display = 'inline-block'; ap.style.display = 'none';
+                        a.classList.remove('hidden');
+                        n.classList.remove('hidden'); ap.classList.add('hidden');
                     } else {
-                        a.classList.add('hidden'); n.style.display = 'none'; ap.style.display = 'inline-block';
+                        a.classList.add('hidden');
+                        n.classList.add('hidden'); ap.classList.remove('hidden');
                     }
                 } else {
                     g.textContent = '未登录·过客'; l.classList.remove('hidden'); o.classList.add('hidden');
-                    a.classList.add('hidden'); n.style.display = 'none'; ap.style.display = 'none';
+                    a.classList.add('hidden'); n.classList.add('hidden'); ap.classList.add('hidden');
                 }
                 if (currentView === 'list') { renderList(); renderTags(); }
-                if (currentView === 'admin') { renderAdmin(); }
+                if (currentView === 'admin') renderAdmin();
                 loadApplications();
             }
 
             async function login(u, p) {
                 var data = await apiCall('/api/login', { method:'POST', body:{username:u, password:p} });
                 currentUser = { username:data.username, role:data.role };
-                updateUI();
-                showToast('欢迎回来，' + data.username);
+                updateUI(); showToast('欢迎回来，' + data.username);
             }
-
-            async function logout() {
-                await apiCall('/api/logout', { method:'POST' }, true);
-                currentUser = null;
-                updateUI();
-                showToast('已登出');
-                switchView('list');
-            }
-
+            async function logout() { await apiCall('/api/logout',{method:'POST'},true); currentUser = null; updateUI(); showToast('已登出'); switchView('list'); }
             function switchView(v) {
                 currentView = v;
-                var views = $$('.view');
-                for (var i=0; i<views.length; i++) views[i].classList.remove('active');
-                var target = $('#view' + v.charAt(0).toUpperCase() + v.slice(1));
-                if (target) target.classList.add('active');
+                var views = $$('.view'); for (var i=0; i<views.length; i++) views[i].classList.remove('active');
+                var target = $('#view' + v.charAt(0).toUpperCase() + v.slice(1)); if (target) target.classList.add('active');
                 if (v === 'list') { renderList(); renderTags(); }
-                if (v === 'admin') { renderAdmin(); }
+                if (v === 'admin') renderAdmin();
                 window.scrollTo({ top:0 });
             }
 
             async function loadArticles() {
-                try {
-                    var data = await apiCall('/api/articles');
-                    articles = Array.isArray(data) ? data : [];
-                } catch(e) { articles = []; }
+                try { var data = await apiCall('/api/articles'); articles = Array.isArray(data) ? data : []; }
+                catch(e) { articles = []; }
                 articles.sort(function(a,b){ return (b.pinned?1:0) - (a.pinned?1:0) || new Date(b.createdAt) - new Date(a.createdAt); });
             }
-
             async function loadApplications() {
                 if (!currentUser || currentUser.role !== 'admin') return;
                 try { pendingApps = await apiCall('/api/article-applications'); } catch(e) { pendingApps = []; }
-                var count = $('#pendingCount');
-                if (count) count.textContent = pendingApps.length;
+                var count = $('#pendingCount'); if (count) count.textContent = pendingApps.length;
                 if (showReview) renderReview();
             }
 
             function getFiltered() {
                 var s = $('#searchInput') ? $('#searchInput').value.trim().toLowerCase() : '';
                 return articles.filter(function(a){
-                    var ms = true;
-                    if (s) {
-                        var title = (a.title||'').toLowerCase();
-                        var summary = (a.summary||'').toLowerCase();
-                        var tags = (a.tags||[]).join(' ').toLowerCase();
-                        ms = title.indexOf(s)!==-1 || summary.indexOf(s)!==-1 || tags.indexOf(s)!==-1;
-                    }
+                    var ms = true; if (s) { var title = (a.title||'').toLowerCase(), summary = (a.summary||'').toLowerCase(), tags = (a.tags||[]).join(' ').toLowerCase(); ms = title.indexOf(s)!==-1 || summary.indexOf(s)!==-1 || tags.indexOf(s)!==-1; }
                     var mt = !activeTag || (a.tags && a.tags.indexOf(activeTag)!==-1);
                     return ms && mt;
                 });
             }
-
             function renderList() {
                 var grid = $('#articlesGrid'), empty = $('#emptyState');
                 var filtered = getFiltered();
-                if (!filtered.length) {
-                    grid.innerHTML = '';
-                    empty.classList.remove('hidden');
-                    return;
-                }
+                if (!filtered.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
                 empty.classList.add('hidden');
                 var html = '';
                 for (var i=0; i<filtered.length; i++) {
                     var a = filtered[i];
-                    html += '<div class="article-card' + (a.pinned ? ' pinned' : '') + '" data-id="' + escapeHtml(a.id) + '">';
+                    html += '<div class="article-card' + (a.pinned?' pinned':'') + '" data-id="' + escapeHtml(a.id) + '">';
                     html += '<div class="card-header"><span class="card-title">' + escapeHtml(a.title) + '</span><span class="card-seal">' + escapeHtml(a.seal||'墨') + '</span></div>';
                     html += '<p class="card-summary">' + escapeHtml(a.summary||'') + '</p>';
-                    html += '<div class="card-meta">';
-                    html += '<span class="card-date">' + formatDate(a.createdAt) + '</span>';
-                    html += '<span class="reading-time">' + calcReadTime(a.content) + ' 分钟</span>';
-                    var tags = a.tags || [];
-                    for (var j=0; j<tags.length; j++) html += '<span class="card-tag">' + escapeHtml(tags[j]) + '</span>';
+                    html += '<div class="card-meta"><span class="card-date">' + formatDate(a.createdAt) + '</span><span class="reading-time">' + calcReadTime(a.content) + ' 分钟</span>';
+                    var tags = a.tags || []; for (var j=0; j<tags.length; j++) html += '<span class="card-tag">' + escapeHtml(tags[j]) + '</span>';
                     html += '<span class="author-badge">' + escapeHtml(a.author || '佚名') + '</span>';
                     html += '</div></div>';
                 }
                 grid.innerHTML = html;
-                grid.onclick = function(ev) {
-                    var card = ev.target.closest('.article-card');
-                    if (card) viewArticle(card.dataset.id);
-                };
+                grid.onclick = function(ev) { var card = ev.target.closest('.article-card'); if (card) viewArticle(card.dataset.id); };
             }
-
             function renderTags() {
                 var container = $('#tagFilter');
-                var all = {};
-                for (var i=0; i<articles.length; i++) {
-                    var tags = articles[i].tags || [];
-                    for (var j=0; j<tags.length; j++) all[tags[j]] = true;
-                }
+                var all = {}; for (var i=0; i<articles.length; i++) { var tags = articles[i].tags||[]; for (var j=0; j<tags.length; j++) all[tags[j]] = true; }
                 var arr = Object.keys(all);
-                container.innerHTML = '<span class="tag-chip' + (activeTag ? '' : ' active') + '" data-tag="">全部</span>';
-                for (var k=0; k<arr.length; k++) {
-                    container.innerHTML += '<span class="tag-chip' + (activeTag===arr[k] ? ' active' : '') + '" data-tag="' + escapeHtml(arr[k]) + '">' + escapeHtml(arr[k]) + '</span>';
-                }
-                container.onclick = function(ev) {
-                    if (ev.target.classList.contains('tag-chip')) {
-                        activeTag = ev.target.dataset.tag || null;
-                        renderList();
-                        renderTags();
-                    }
-                };
+                container.innerHTML = '<span class="tag-chip' + (activeTag?'':' active') + '" data-tag="">全部</span>';
+                for (var k=0; k<arr.length; k++) container.innerHTML += '<span class="tag-chip' + (activeTag===arr[k]?' active':'') + '" data-tag="' + escapeHtml(arr[k]) + '">' + escapeHtml(arr[k]) + '</span>';
+                container.onclick = function(ev) { if (ev.target.classList.contains('tag-chip')) { activeTag = ev.target.dataset.tag || null; renderList(); renderTags(); } };
             }
 
             async function viewArticle(id) {
-                try {
-                    var a = await apiCall('/api/articles/' + encodeURIComponent(id));
-                    if (!a) { showToast('文章不存在','error'); return; }
-                    renderDetail(a);
-                    switchView('detail');
-                } catch(e) { showToast('加载失败: ' + e.message, 'error'); }
+                try { var a = await apiCall('/api/articles/' + encodeURIComponent(id)); if (!a) { showToast('文章不存在','error'); return; } renderDetail(a); switchView('detail'); }
+                catch(e) { showToast('加载失败: ' + e.message, 'error'); }
             }
-
             function renderDetail(a) {
                 var container = $('#articleDetailContent');
-                var contentHtml = '';
-                try { contentHtml = marked.parse(a.content); } catch(e) { contentHtml = escapeHtml(a.content).replace(/\n/g, '<br>'); }
-                container.innerHTML = '<div class="detail-header"><h1 class="detail-title">' + escapeHtml(a.title) + '</h1><div class="detail-meta"><span>📅 ' + formatDate(a.createdAt) + '</span>' + (a.updatedAt && a.updatedAt !== a.createdAt ? '<span>✏️ 更新于 ' + formatDate(a.updatedAt) + '</span>' : '') + ((a.tags||[]).map(function(t){return '<span class="detail-tag">' + escapeHtml(t) + '</span>';}).join('')) + '<span class="author-badge" style="margin-left:auto;">' + escapeHtml(a.author||'佚名') + '</span></div></div><div class="detail-content">' + contentHtml + '</div><div class="detail-actions"></div>';
+                var contentHtml = ''; try { contentHtml = marked.parse(a.content); } catch(e) { contentHtml = escapeHtml(a.content).replace(/\n/g,'<br>'); }
+                container.innerHTML = '<div class="detail-header"><h1 class="detail-title">' + escapeHtml(a.title) + '</h1><div class="detail-meta"><span>📅 ' + formatDate(a.createdAt) + '</span>' + (a.updatedAt&&a.updatedAt!==a.createdAt?'<span>✏️ 更新于 ' + formatDate(a.updatedAt) + '</span>':'') + ((a.tags||[]).map(function(t){return '<span class="detail-tag">' + escapeHtml(t) + '</span>';}).join('')) + '<span class="author-badge" style="margin-left:auto;">' + escapeHtml(a.author||'佚名') + '</span></div></div><div class="detail-content">' + contentHtml + '</div><div class="detail-actions"></div>';
                 if (currentUser && currentUser.role === 'admin') {
                     var actions = container.querySelector('.detail-actions');
-                    var eb = document.createElement('button'); eb.className = 'btn btn-sm'; eb.textContent = '✏️ 编辑';
-                    eb.onclick = function() { openEditor(a.id); };
-                    var db = document.createElement('button'); db.className = 'btn btn-sm btn-danger'; db.textContent = '🗑️ 删除';
-                    db.onclick = function() { confirmDel(a.id, a.title); };
+                    var eb = document.createElement('button'); eb.className = 'btn btn-sm'; eb.textContent = '✏️ 编辑'; eb.onclick = function() { openEditor(a.id); };
+                    var db = document.createElement('button'); db.className = 'btn btn-sm btn-danger'; db.textContent = '🗑️ 删除'; db.onclick = function() { confirmDel(a.id, a.title); };
                     actions.appendChild(eb); actions.appendChild(db);
                 }
             }
-
             async function openEditor(id) {
                 var modal = $('#articleModal'), titleEl = $('#articleModalTitle'), submitBtn = $('#submitArticle');
                 if (id) {
                     var a = await apiCall('/api/articles/' + encodeURIComponent(id));
                     if (!a) { showToast('文章不存在','error'); return; }
                     titleEl.textContent = '✏️ 编辑文章'; submitBtn.textContent = '保 存';
-                    $('#articleTitle').value = a.title || '';
-                    $('#articleSummary').value = a.summary || '';
-                    $('#articleTags').value = (a.tags||[]).join(', ');
-                    $('#articleSeal').value = a.seal || '墨';
-                    $('#articleContent').value = a.content || '';
-                    $('#articlePinned').checked = !!a.pinned;
-                    $('#articleEditId').value = id;
+                    $('#articleTitle').value = a.title||''; $('#articleSummary').value = a.summary||''; $('#articleTags').value = (a.tags||[]).join(', '); $('#articleSeal').value = a.seal||'墨';
+                    $('#articleContent').value = a.content||''; $('#articlePinned').checked = !!a.pinned; $('#articleEditId').value = id;
                 } else {
                     titleEl.textContent = '📝 撰写新篇'; submitBtn.textContent = '发 布';
-                    $('#articleTitle').value = '';
-                    $('#articleSummary').value = '';
-                    $('#articleTags').value = '';
-                    $('#articleSeal').value = '墨';
-                    $('#articleContent').value = '';
-                    $('#articlePinned').checked = false;
-                    $('#articleEditId').value = '';
+                    $('#articleTitle').value = ''; $('#articleSummary').value = ''; $('#articleTags').value = ''; $('#articleSeal').value = '墨'; $('#articleContent').value = ''; $('#articlePinned').checked = false; $('#articleEditId').value = '';
                 }
                 modal.classList.add('active');
             }
-
             async function submitArticle() {
-                var title = $('#articleTitle').value.trim();
-                var content = $('#articleContent').value.trim();
-                if (!title || !content) { showToast('标题和内容不能为空','error'); return; }
-                var data = {
-                    title: title, content: content,
-                    summary: $('#articleSummary').value.trim(),
-                    tags: $('#articleTags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean),
-                    seal: $('#articleSeal').value.trim() || '墨',
-                    pinned: $('#articlePinned').checked
-                };
+                var title = $('#articleTitle').value.trim(), content = $('#articleContent').value.trim();
+                if (!title || !content) return showToast('标题和内容不能为空','error');
+                var data = { title:title, content:content, summary:$('#articleSummary').value.trim(), tags:$('#articleTags').value.split(',').map(function(t){return t.trim();}).filter(Boolean), seal:$('#articleSeal').value.trim()||'墨', pinned:$('#articlePinned').checked };
                 var editId = $('#articleEditId').value;
                 try {
-                    if (editId) {
-                        await apiCall('/api/articles/' + encodeURIComponent(editId), { method:'PUT', body:data });
-                        showToast('文章已更新');
-                    } else {
-                        await apiCall('/api/articles', { method:'POST', body:data });
-                        showToast('文章已发布');
-                    }
+                    if (editId) { await apiCall('/api/articles/' + encodeURIComponent(editId), { method:'PUT', body:data }); showToast('文章已更新'); }
+                    else { await apiCall('/api/articles', { method:'POST', body:data }); showToast('文章已发布'); }
                     $('#articleModal').classList.remove('active');
                     await loadArticles();
-                    if (currentView === 'list') { renderList(); renderTags(); }
-                    if (currentView === 'admin') renderAdmin();
+                    if (currentView==='list') { renderList(); renderTags(); }
+                    if (currentView==='admin') renderAdmin();
                 } catch(e) { showToast('操作失败: ' + e.message, 'error'); }
             }
-
-            function confirmDel(id, title) {
-                pendingDeleteId = id;
-                $('#confirmModal').classList.add('active');
-                $('#confirmModal').querySelector('p').textContent = '此操作不可恢复，确定要删除「' + (title||'这篇文章') + '」吗？';
-            }
-
+            function confirmDel(id, title) { pendingDeleteId = id; $('#confirmModal').classList.add('active'); $('#confirmModal').querySelector('p').textContent = '此操作不可恢复，确定要删除「' + (title||'这篇文章') + '」吗？'; }
             async function executeDelete() {
                 if (!pendingDeleteId) return;
-                try {
-                    await apiCall('/api/articles/' + encodeURIComponent(pendingDeleteId), { method:'DELETE' });
-                    showToast('已删除');
-                } catch(e) { showToast('删除失败: ' + e.message, 'error'); }
-                $('#confirmModal').classList.remove('active');
-                pendingDeleteId = null;
+                try { await apiCall('/api/articles/' + encodeURIComponent(pendingDeleteId), { method:'DELETE' }); showToast('已删除'); }
+                catch(e) { showToast('删除失败: ' + e.message, 'error'); }
+                $('#confirmModal').classList.remove('active'); pendingDeleteId = null;
                 await loadArticles();
-                if (currentView === 'list') { renderList(); renderTags(); }
-                if (currentView === 'admin') renderAdmin();
-                if (currentView === 'detail') switchView('list');
+                if (currentView==='list') { renderList(); renderTags(); }
+                if (currentView==='admin') renderAdmin();
+                if (currentView==='detail') switchView('list');
             }
-
             function renderAdmin() {
-                var container = $('#adminArticlesList');
-                var reviewPanel = $('#reviewPanel');
+                var container = $('#adminArticlesList'), reviewPanel = $('#reviewPanel');
                 if (showReview) {
-                    container.style.display = 'none';
-                    reviewPanel.style.display = 'block';
+                    container.style.display = 'none'; reviewPanel.style.display = 'block';
                     renderReview();
                 } else {
-                    container.style.display = 'block';
-                    reviewPanel.style.display = 'none';
+                    container.style.display = 'block'; reviewPanel.style.display = 'none';
                     var html = '';
                     for (var i=0; i<articles.length; i++) {
                         var a = articles[i];
                         html += '<div class="article-manage-item"><div class="item-info"><span class="item-title">' + escapeHtml(a.title) + '</span><span class="item-date">' + formatDate(a.createdAt) + ' by ' + escapeHtml(a.author||'佚名') + '</span></div><div class="item-actions"><button class="btn btn-sm edit-btn" data-id="' + escapeHtml(a.id) + '">✏️</button><button class="btn btn-sm btn-danger delete-btn" data-id="' + escapeHtml(a.id) + '">🗑️</button></div></div>';
                     }
                     container.innerHTML = html;
-                    container.onclick = function(ev) {
-                        if (ev.target.classList.contains('edit-btn')) openEditor(ev.target.dataset.id);
-                        else if (ev.target.classList.contains('delete-btn')) confirmDel(ev.target.dataset.id, ev.target.dataset.title);
-                    };
+                    container.onclick = function(ev) { if (ev.target.classList.contains('edit-btn')) openEditor(ev.target.dataset.id); else if (ev.target.classList.contains('delete-btn')) confirmDel(ev.target.dataset.id, ev.target.dataset.title); };
                 }
             }
-
             function renderReview() {
                 var container = $('#reviewList');
-                if (!pendingApps.length) {
-                    container.innerHTML = '<p style="color:var(--text-muted);">暂无待审核文章</p>';
-                    return;
-                }
+                if (!pendingApps.length) { container.innerHTML = '<p style="color:var(--text-muted);">暂无待审核文章</p>'; return; }
                 var html = '';
                 for (var i=0; i<pendingApps.length; i++) {
                     var a = pendingApps[i];
                     html += '<div class="article-manage-item"><div class="item-info"><span class="item-title">' + escapeHtml(a.title) + '</span><span class="item-date">' + formatDate(a.createdAt) + ' by ' + escapeHtml(a.applicant) + '</span></div><div class="item-actions"><button class="btn btn-sm approve-btn" data-id="' + escapeHtml(a.id) + '">✅ 通过</button><button class="btn btn-sm btn-danger reject-btn" data-id="' + escapeHtml(a.id) + '">❌ 拒绝</button></div></div>';
                 }
                 container.innerHTML = html;
-                container.onclick = function(ev) {
-                    var id = ev.target.dataset.id;
-                    if (ev.target.classList.contains('approve-btn')) approveApplication(id);
-                    else if (ev.target.classList.contains('reject-btn')) rejectApplication(id);
-                };
+                container.onclick = function(ev) { var id = ev.target.dataset.id; if (ev.target.classList.contains('approve-btn')) approveApplication(id); else if (ev.target.classList.contains('reject-btn')) rejectApplication(id); };
             }
-
             async function approveApplication(id) {
-                try {
-                    await apiCall('/api/article-applications/' + id + '/approve', { method:'POST' });
-                    showToast('已批准并发布');
-                } catch(e) { showToast('操作失败: ' + e.message, 'error'); }
-                await loadApplications();
-                await loadArticles();
-                if (currentView === 'list') { renderList(); renderTags(); }
+                try { await apiCall('/api/article-applications/' + id + '/approve', { method:'POST' }); showToast('已批准并发布'); }
+                catch(e) { showToast('操作失败: ' + e.message, 'error'); }
+                await loadApplications(); await loadArticles();
+                if (currentView==='list') { renderList(); renderTags(); }
             }
-
             async function rejectApplication(id) {
-                try {
-                    await apiCall('/api/article-applications/' + id, { method:'DELETE' });
-                    showToast('已拒绝');
-                } catch(e) { showToast('操作失败: ' + e.message, 'error'); }
+                try { await apiCall('/api/article-applications/' + id, { method:'DELETE' }); showToast('已拒绝'); }
+                catch(e) { showToast('操作失败: ' + e.message, 'error'); }
                 await loadApplications();
             }
 
@@ -743,121 +593,71 @@
                 function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
                 window.addEventListener('resize', resize); resize();
                 function Particle() { this.reset(true); }
-                Particle.prototype.reset = function(init) {
-                    this.x = Math.random() * w;
-                    this.y = init ? Math.random() * h : -10;
-                    this.size = 0.5 + Math.random() * 2.5;
-                    this.speedY = 0.2 + Math.random() * 0.8;
-                    this.speedX = (Math.random() - 0.5) * 0.4;
-                    this.opacity = 0.3 + Math.random() * 0.6;
-                    this.type = Math.random() > 0.7 ? 'gold' : (Math.random() > 0.5 ? 'cyan' : 'ink');
-                    if (this.type === 'gold') this.color = 'rgba(200,160,60,' + this.opacity + ')';
-                    else if (this.type === 'cyan') this.color = 'rgba(0,220,240,' + this.opacity + ')';
-                    else this.color = 'rgba(120,100,80,' + this.opacity + ')';
-                };
-                Particle.prototype.update = function() {
-                    this.y += this.speedY;
-                    this.x += Math.sin(this.y * 0.01) * this.speedX;
-                    if (this.y > h + 15) this.reset(false);
-                };
-                Particle.prototype.draw = function(ctx) {
-                    ctx.globalAlpha = this.opacity;
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fill();
-                };
+                Particle.prototype.reset = function(init) { this.x = Math.random()*w; this.y = init ? Math.random()*h : -10; this.size = 0.5+Math.random()*2.5; this.speedY = 0.2+Math.random()*0.8; this.speedX = (Math.random()-0.5)*0.4; this.opacity = 0.3+Math.random()*0.6; this.type = Math.random()>0.7?'gold':(Math.random()>0.5?'cyan':'ink'); if (this.type==='gold') this.color = 'rgba(200,160,60,'+this.opacity+')'; else if (this.type==='cyan') this.color = 'rgba(0,220,240,'+this.opacity+')'; else this.color = 'rgba(120,100,80,'+this.opacity+')'; };
+                Particle.prototype.update = function() { this.y += this.speedY; this.x += Math.sin(this.y*0.01)*this.speedX; if (this.y > h+15) this.reset(false); };
+                Particle.prototype.draw = function(ctx) { ctx.globalAlpha = this.opacity; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); };
                 for (var i=0; i<60; i++) particles.push(new Particle());
-                function animate() {
-                    ctx.clearRect(0, 0, w, h);
-                    for (var i=0; i<particles.length; i++) { particles[i].update(); particles[i].draw(ctx); }
-                    requestAnimationFrame(animate);
-                }
+                function animate() { ctx.clearRect(0,0,w,h); for (var i=0; i<particles.length; i++) { particles[i].update(); particles[i].draw(ctx); } requestAnimationFrame(animate); }
                 animate();
             }
 
             function bindEvents() {
-                $('#loginBtn').addEventListener('click', function() { $('#loginModal').classList.add('active'); });
-                $('#closeLoginModal').addEventListener('click', function() { $('#loginModal').classList.remove('active'); });
-                $('#submitLogin').addEventListener('click', async function() {
-                    var u = $('#loginUsername').value.trim(), p = $('#loginPassword').value;
-                    if (!u || !p) return showToast('请输入账号密码', 'error');
-                    try {
-                        await login(u, p);
-                        $('#loginModal').classList.remove('active');
-                        $('#loginUsername').value = ''; $('#loginPassword').value = '';
-                        await loadArticles();
-                        renderList(); renderTags();
-                    } catch(e) { showToast('登录失败: ' + e.message, 'error'); }
+                $('#loginBtn').addEventListener('click', function(){ $('#loginModal').classList.add('active'); });
+                $('#closeLoginModal').addEventListener('click', function(){ $('#loginModal').classList.remove('active'); });
+                $('#submitLogin').addEventListener('click', async function(){
+                    var u=$('#loginUsername').value.trim(), p=$('#loginPassword').value;
+                    if (!u||!p) return showToast('请输入账号密码','error');
+                    try { await login(u,p); $('#loginModal').classList.remove('active'); $('#loginUsername').value=''; $('#loginPassword').value=''; await loadArticles(); renderList(); renderTags(); }
+                    catch(e) { showToast('登录失败: '+e.message,'error'); }
                 });
                 $('#logoutBtn').addEventListener('click', logout);
-                $('#adminPanelBtn').addEventListener('click', function() { switchView('admin'); });
-                $('#backFromAdminBtn').addEventListener('click', function() { switchView('list'); });
-                $('#newArticleBtn').addEventListener('click', function() { openEditor(null); });
-                $('#adminNewArticleBtn').addEventListener('click', function() { openEditor(null); });
-                $('#closeArticleModal').addEventListener('click', function() { $('#articleModal').classList.remove('active'); });
-                $('#cancelArticle').addEventListener('click', function() { $('#articleModal').classList.remove('active'); });
+                $('#adminPanelBtn').addEventListener('click', function(){ switchView('admin'); });
+                $('#backFromAdminBtn').addEventListener('click', function(){ switchView('list'); });
+                $('#newArticleBtn').addEventListener('click', function(){ openEditor(null); });
+                $('#adminNewArticleBtn').addEventListener('click', function(){ openEditor(null); });
+                $('#closeArticleModal').addEventListener('click', function(){ $('#articleModal').classList.remove('active'); });
+                $('#cancelArticle').addEventListener('click', function(){ $('#articleModal').classList.remove('active'); });
                 $('#submitArticle').addEventListener('click', submitArticle);
-                $('#backToListBtn').addEventListener('click', function() { switchView('list'); });
+                $('#backToListBtn').addEventListener('click', function(){ switchView('list'); });
                 $('#confirmDeleteBtn').addEventListener('click', executeDelete);
-                $('#cancelDeleteBtn').addEventListener('click', function() { $('#confirmModal').classList.remove('active'); });
-                $('#searchInput').addEventListener('input', function() { renderList(); });
+                $('#cancelDeleteBtn').addEventListener('click', function(){ $('#confirmModal').classList.remove('active'); });
+                $('#searchInput').addEventListener('input', function(){ renderList(); });
                 var topBtn = $('#backToTop');
-                window.addEventListener('scroll', function() { topBtn.style.display = window.scrollY > 500 ? 'flex' : 'none'; });
-                topBtn.addEventListener('click', function() { window.scrollTo({ top:0, behavior:'smooth' }); });
+                window.addEventListener('scroll', function(){ topBtn.style.display = window.scrollY>500?'flex':'none'; });
+                topBtn.addEventListener('click', function(){ window.scrollTo({ top:0, behavior:'smooth' }); });
 
-                // 申请文章相关
-                $('#applyArticleBtn').addEventListener('click', function() { $('#applyModal').classList.add('active'); });
-                $('#closeApplyModal').addEventListener('click', function() { $('#applyModal').classList.remove('active'); });
-                $('#cancelApply').addEventListener('click', function() { $('#applyModal').classList.remove('active'); });
-                $('#submitApply').addEventListener('click', async function() {
-                    var title = $('#applyTitle').value.trim();
-                    var content = $('#applyContent').value.trim();
-                    if (!title || !content) return showToast('标题和内容不能为空', 'error');
-                    var data = {
-                        title: title, content: content,
-                        summary: $('#applySummary').value.trim(),
-                        tags: $('#applyTags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean),
-                        seal: $('#applySeal').value.trim() || '墨'
-                    };
+                $('#applyArticleBtn').addEventListener('click', function(){ $('#applyModal').classList.add('active'); });
+                $('#closeApplyModal').addEventListener('click', function(){ $('#applyModal').classList.remove('active'); });
+                $('#cancelApply').addEventListener('click', function(){ $('#applyModal').classList.remove('active'); });
+                $('#submitApply').addEventListener('click', async function(){
+                    var title=$('#applyTitle').value.trim(), content=$('#applyContent').value.trim();
+                    if (!title||!content) return showToast('标题和内容不能为空','error');
+                    var data = { title:title, content:content, summary:$('#applySummary').value.trim(), tags:$('#applyTags').value.split(',').map(function(t){return t.trim();}).filter(Boolean), seal:$('#applySeal').value.trim()||'墨' };
                     try {
                         await apiCall('/api/article-applications', { method:'POST', body:data });
                         showToast('申请已提交，等待管理员审核');
                         $('#applyModal').classList.remove('active');
-                        $('#applyTitle').value = ''; $('#applyContent').value = '';
-                        $('#applySummary').value = ''; $('#applyTags').value = ''; $('#applySeal').value = '墨';
-                    } catch(e) { showToast('提交失败: ' + e.message, 'error'); }
+                        $('#applyTitle').value=''; $('#applyContent').value=''; $('#applySummary').value=''; $('#applyTags').value=''; $('#applySeal').value='墨';
+                    } catch(e) { showToast('提交失败: '+e.message,'error'); }
                 });
 
-                // 管理审核切换
-                $('#reviewTabBtn').addEventListener('click', function() {
+                $('#reviewTabBtn').addEventListener('click', function(){
                     showReview = !showReview;
                     this.innerHTML = showReview ? '📝 管理文章' : '📋 待审核(<span id="pendingCount">' + pendingApps.length + '</span>)';
                     renderAdmin();
                 });
 
-                // 关闭模态框点击遮罩
                 var overlays = $$('.modal-overlay');
                 for (var i=0; i<overlays.length; i++) {
-                    (function(ov) {
-                        ov.addEventListener('click', function(e) { if (e.target === ov) ov.classList.remove('active'); });
-                    })(overlays[i]);
+                    (function(ov){ ov.addEventListener('click', function(e){ if (e.target===ov) ov.classList.remove('active'); }); })(overlays[i]);
                 }
             }
 
-            window._blogApp = {
-                viewArticle: viewArticle,
-                editArticle: openEditor,
-                confirmDeleteArticle: confirmDel
-            };
-
+            window._blogApp = { viewArticle:viewArticle, editArticle:openEditor, confirmDeleteArticle:confirmDel };
             async function init() {
-                initParticles();
-                bindEvents();
-                await loadArticles();
-                await checkLogin();
-                renderList();
-                renderTags();
+                initParticles(); bindEvents();
+                await loadArticles(); await checkLogin();
+                renderList(); renderTags();
             }
             init();
         })();
