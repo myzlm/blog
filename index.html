@@ -4,11 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>墨韵·云笺 | 古风科技博客</title>
-    <!-- 内联 Markdown 解析器 (marked v4.3.0) -->
-    <script>
-        /*! marked v4.3.0 - a markdown parser */
-        !function(e,t){if("object"==typeof exports&&"undefined"!=typeof module)t(exports);else if("function"==typeof define&&define.amd)define(["exports"],t);else {var n=e.marked=e.marked||{};t(n)}}(this,function(e){"use strict";function t(e){var t=e.match(/^(\s*)([^\s#].*?)(\s*)$/);return t?{raw:e,text:t[2].trim()}:null}function n(e){var t=e.match(/^(\s*)(#{1,6})\s*(.+?)(\s*#*)?$/);return t?{raw:e,depth:t[2].length,text:t[3].trim()}:null}function r(e){var t=e.match(/^(\s*)([*-])\s+(.+)$/);return t?{raw:e,text:t[3].trim()}:null}function i(e){var t=e.match(/^(\s*)(\d+)\.\s+(.+)$/);return t?{raw:e,number:parseInt(t[2]),text:t[3].trim()}:null}function o(e){var t=e.match(/^(\s*)>\s?(.+)/);return t?{raw:e,text:t[2].trim()}:null}function s(e){var t=e.match(/^(\s*)(`{3,}|~{3,})\s*(\S+)?\s*$/);return t?{raw:e,lang:t[3]||"",type:"code"}:null}function a(e){var t=e.match(/^(\s*)(`{1,2})([^`]+)\2/);return t?{raw:e,text:t[3].trim()}:null}function l(e){var t=e.match(/^!\[([^\]]*)\]\(([^)]+)\)/);return t?{raw:e,alt:t[1],href:t[2]}:null}function c(e){var t=e.match(/^\[([^\]]+)\]\(([^)]+)\)/);return t?{raw:e,text:t[1],href:t[2]}:null}function h(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function u(e){var n="";for(var r=0;r<e.length;r++){var i=e[r],o=i.raw;if(i.type==="heading"){var s=i.depth;n+="<h"+s+">"+h(i.text)+"</h"+s+">"}else if(i.type==="paragraph")n+="<p>"+h(i.text)+"</p>";else if(i.type==="list"){n+="<ul>";for(var a=0;a<i.items.length;a++)n+="<li>"+h(i.items[a])+"</li>";n+="</ul>"}else if(i.type==="ordered_list"){n+="<ol>";for(var l=0;l<i.items.length;l++)n+="<li>"+h(i.items[l])+"</li>";n+="</ol>"}else if(i.type==="blockquote")n+="<blockquote>"+h(i.text)+"</blockquote>";else if(i.type==="code")n+="<pre><code>"+h(i.text)+"</code></pre>";else if(i.type==="hr")n+="<hr>";else if(i.type==="image")n+='<img src="'+h(i.href)+'" alt="'+h(i.alt)+'">';else if(i.type==="link")n+='<a href="'+h(i.href)+'">'+h(i.text)+"</a>";else if(i.type==="inline_code")n+="<code>"+h(i.text)+"</code>"}return n}function p(e){var n=[],r="",i="",o=null;for(var s=0;s<e.length;s++){var a=e[s];if(a.trim()===""){if(o&&o.type==="paragraph"){o.text=r;o=null}r="";continue}if(!o){if(a.startsWith("#")){var l=n(a);if(l){o=l;n.push(o);continue}}if(a.startsWith(">")){var c=o(a);if(c){o=c;n.push(o);continue}}if(a.startsWith("```")||a.startsWith("~~~")){var h=s(a);if(h){o={type:"code",text:"",lang:h.lang};n.push(o);s++;while(s<e.length&&!e[s].startsWith("```")&&!e[s].startsWith("~~~")){o.text+=e[s]+"\n";s++}continue}}var u=r(a);if(u){o={type:"list",items:[u.text]};n.push(o);continue}var p=i(a);if(p){o={type:"ordered_list",items:[p.text],start:p.number};n.push(o);continue}var d=l(a);if(d){o={type:"image",alt:d.alt,href:d.href};n.push(o);continue}var f=c(a);if(f){o={type:"link",text:f.text,href:f.href};n.push(o);continue}if(/^(\*{3,}|-{3,}|_{3,})$/.test(a)){o={type:"hr"};n.push(o);continue}o={type:"paragraph",text:a}}else if(o.type==="paragraph")o.text+="\n"+a;else if(o.type==="list"){var g=r(a);if(g)o.items.push(g.text);else{o.text+="\n"+a}}else if(o.type==="ordered_list"){var m=i(a);if(m)o.items.push(m.text);else o.text+="\n"+a}}if(o&&o.type==="paragraph")o.text=r;return n}function d(e){var t=[];for(var n=0;n<e.length;n++){var r=e[n];if(r.startsWith("```")){var i=s(r);if(i){var o="",a=n+1;while(a<e.length&&!e[a].startsWith("```")){o+=e[a]+"\n";a++}t.push({type:"code",lang:i.lang,text:o});n=a;continue}}if(r.startsWith("#")){var l=n(r);if(l){t.push(l);continue}}if(r.startsWith(">")){var c=o(r);if(c){t.push(c);continue}}var h=r;t.push({type:"paragraph",text:h})}return t}function f(e){var t=[];for(var n=0;n<e.length;n++){var r=e[n];var i="";if(r.startsWith("- ")||r.startsWith("* ")){var o=r(a);if(o){var s=[o.text];n++;while(n<e.length&&(e[n].startsWith("- ")||e[n].startsWith("* "))){var l=r(e[n]);if(l)s.push(l.text);n++}t.push({type:"list",items:s});n--;continue}}if(/^\d+\.\s/.test(r)){var c=i(r);if(c){var h=[c.text];n++;while(n<e.length&&/^\d+\.\s/.test(e[n])){var u=i(e[n]);if(u)h.push(u.text);n++}t.push({type:"ordered_list",items:h,start:c.number});n--;continue}}if(r.match(/^!\[/)){var p=l(r);if(p){t.push(p);continue}}if(r.match(/^\[/)){var d=c(r);if(d){t.push(d);continue}}if(r.match(/`[^`]+`/)){var f=a(r);if(f){t.push({type:"inline_code",text:f.text});continue}}if(/^(\*{3,}|-{3,}|_{3,})$/.test(r)){t.push({type:"hr"});continue}t.push({type:"paragraph",text:r})}return t}function g(e){var t=e.split("\n");return u(f(t))}e.parse=g;e.lexer=f;e.parser=u;e.Renderer=function(){};e.Renderer.prototype.code=function(e,t){return"<pre><code>"+h(e)+"</code></pre>"};e.Renderer.prototype.blockquote=function(e){return"<blockquote>"+e+"</blockquote>"};e.Renderer.prototype.html=function(e){return e};e.Renderer.prototype.heading=function(e,t,n){return"<h"+t+">"+e+"</h"+t+">"};e.Renderer.prototype.hr=function(){return"<hr>"};e.Renderer.prototype.list=function(e,t){var n=t?"ol":"ul";return"<"+n+">"+e+"</"+n+">"};e.Renderer.prototype.listitem=function(e){return"<li>"+e+"</li>"};e.Renderer.prototype.paragraph=function(e){return"<p>"+e+"</p>"};e.Renderer.prototype.table=function(e,t){return"<table>"+t+e+"</table>"};e.Renderer.prototype.tablerow=function(e){return"<tr>"+e+"</tr>"};e.Renderer.prototype.tablecell=function(e,t){var n=t.header?"th":"td";return"<"+n+">"+e+"</"+n+">"};e.Renderer.prototype.strong=function(e){return"<strong>"+e+"</strong>"};e.Renderer.prototype.em=function(e){return"<em>"+e+"</em>"};e.Renderer.prototype.codespan=function(e){return"<code>"+e+"</code>"};e.Renderer.prototype.br=function(){return"<br>"};e.Renderer.prototype.del=function(e){return"<del>"+e+"</del>"};e.Renderer.prototype.link=function(e,t,n){return'<a href="'+t+'">'+e+"</a>"};e.Renderer.prototype.image=function(e,t,n){return'<img src="'+t+'" alt="'+e+'">'};e.Renderer.prototype.text=function(e){return e};e.setOptions=function(){}});
-    </script>
+
+    <!-- ===== Markdown 核心库 ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+
+    <!-- ===== 代码高亮 ===== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- ===== KaTeX 数学公式 ===== -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+
+    <!-- ===== Mermaid 图表 ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+
     <style>
         :root {
             --bg-deep: #12121f;
@@ -209,6 +220,8 @@
         .detail-content pre::before { content: '◈ 代码'; position: absolute; top: -10px; left: 12px; font-size: 0.7rem; color: var(--cyan-neon); background: var(--bg-deep); padding: 0 8px; }
         .detail-content pre code { background: transparent; border: none; padding: 0; color: #e0e0e0; font-size: 0.85rem; }
         .detail-content blockquote { border-left: 3px solid var(--gold); padding: 0.6rem 1rem; margin: 1em 0; background: rgba(250,219,95,0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); font-style: italic; }
+        .detail-content .mermaid { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle); margin: 1em 0; text-align: center; }
+        .detail-content .katex-error { color: #ff6b6b; background: rgba(255,107,107,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.9em; }
         .detail-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 200; visibility: hidden; opacity: 0; transition: opacity 0.35s ease, visibility 0.35s; }
@@ -230,7 +243,7 @@
         .input-group label { display: block; margin-bottom: 0.35rem; color: var(--text-secondary); font-size: 0.85rem; letter-spacing: 1px; }
         .input-group input, .input-group textarea { width: 100%; padding: 0.65rem 1rem; border: 1px solid rgba(250,219,95,0.4); border-radius: var(--radius-md); background: rgba(25,25,40,0.8); color: var(--text-primary); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: all var(--transition-smooth); }
         .input-group input:focus, .input-group textarea:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-glow), 0 0 0 3px rgba(250,219,95,0.08); background: rgba(35,35,55,0.9); }
-        .input-group textarea { min-height: 200px; resize: vertical; font-family: var(--font-body); line-height: 1.7; }
+        .input-group textarea { min-height: 200px; resize: vertical; font-family: var(--font-mono); line-height: 1.7; }
         .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
 
         .admin-panel { background: rgba(35, 35, 55, 0.9); backdrop-filter: blur(14px); border: 1px solid rgba(255,107,107,0.4); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: 0 0 25px rgba(255,107,107,0.15), 0 4px 20px rgba(0,0,0,0.4); }
@@ -345,7 +358,7 @@
                 <div class="input-group"><label>印章</label><input type="text" id="articleSeal" maxlength="2" placeholder="墨"></div>
                 <div class="input-group"><label>置顶</label><input type="checkbox" id="articlePinned" style="width:auto;"> 置顶</div>
                 <div class="input-group">
-                    <label>内容（支持Markdown）</label>
+                    <label>内容（支持 Markdown / LaTeX / Mermaid）</label>
                     <textarea id="articleContent"></textarea>
                 </div>
                 <div class="modal-actions" style="justify-content:space-between;">
@@ -396,13 +409,48 @@
             var $ = function(s) { return document.querySelector(s); };
             var $$ = function(s) { return document.querySelectorAll(s); };
 
+            // ---- 初始化 Mermaid ----
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'dark',
+                    securityLevel: 'loose',
+                    fontFamily: 'Inter, sans-serif',
+                });
+            }
+
+            // ---- 配置 marked 渲染器 ----
+            function setupMarked() {
+                if (typeof marked === 'undefined') return;
+                var renderer = new marked.Renderer();
+                renderer.code = function(code, language) {
+                    if (language === 'mermaid') {
+                        return '<pre class="mermaid">' + code + '</pre>';
+                    }
+                    try {
+                        var highlighted;
+                        if (language && hljs.getLanguage(language)) {
+                            highlighted = hljs.highlight(code, { language: language, ignoreIllegals: true }).value;
+                        } else {
+                            highlighted = hljs.highlightAuto(code).value;
+                        }
+                        var langClass = language ? ' language-' + language : '';
+                        return '<pre><code class="hljs' + langClass + '">' + highlighted + '</code></pre>';
+                    } catch (e) {
+                        return '<pre><code>' + code + '</code></pre>';
+                    }
+                };
+                marked.use({ renderer: renderer });
+            }
+            setupMarked();
+
             function escapeHtml(t) { var m = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return String(t).replace(/[&<>"']/g, function(c){return m[c];}); }
             function showToast(msg, type) { var t = type || 'success'; var c = $('#toastContainer'); var d = document.createElement('div'); d.className = 'toast toast-' + t; d.textContent = msg; c.appendChild(d); setTimeout(function(){ if(d.parentNode) d.remove(); }, 3000); }
             function formatDate(d) { if(!d) return ''; var dt = new Date(d); var ch = ['','元月','杏月','桃月','槐月','榴月','荷月','兰月','桂月','菊月','露月','葭月','腊月']; var m = dt.getMonth() + 1; var g = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']; var z = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return g[(dt.getFullYear()-4)%10] + z[(dt.getFullYear()-4)%12] + '年·' + (ch[m]||m+'月') + dt.getDate() + '日'; }
             function calcReadTime(t) { var w = (t||'').replace(/[^\u4e00-\u9fa5a-zA-Z]/g,'').length; return Math.max(1, Math.round(w/400)); }
 
             var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null;
-            var currentTab = 'articles'; // articles, review, quota
+            var currentTab = 'articles';
             var applyQuotaRemaining = 0;
 
             async function apiCall(url, opt, silent) {
@@ -512,10 +560,52 @@
                 try { var a = await apiCall('/api/articles/' + encodeURIComponent(id)); if (!a) { showToast('文章不存在','error'); return; } renderDetail(a); switchView('detail'); }
                 catch(e) { showToast('加载失败: ' + e.message, 'error'); }
             }
+
+            // ---- 增强的文章渲染（支持 KaTeX + Mermaid + 代码高亮） ----
             function renderDetail(a) {
                 var container = $('#articleDetailContent');
-                var contentHtml = ''; try { contentHtml = marked.parse(a.content); } catch(e) { contentHtml = escapeHtml(a.content).replace(/\n/g,'<br>'); }
+                var rawContent = a.content || '';
+                var contentHtml = '';
+                try {
+                    if (typeof marked !== 'undefined') {
+                        contentHtml = marked.parse(rawContent);
+                    } else {
+                        contentHtml = escapeHtml(rawContent).replace(/\n/g, '<br>');
+                    }
+                } catch(e) {
+                    contentHtml = escapeHtml(rawContent).replace(/\n/g, '<br>');
+                }
                 container.innerHTML = '<div class="detail-header"><h1 class="detail-title">' + escapeHtml(a.title) + '</h1><div class="detail-meta"><span>📅 ' + formatDate(a.createdAt) + '</span>' + (a.updatedAt&&a.updatedAt!==a.createdAt?'<span>✏️ 更新于 ' + formatDate(a.updatedAt) + '</span>':'') + ((a.tags||[]).map(function(t){return '<span class="detail-tag">' + escapeHtml(t) + '</span>';}).join('')) + '<span class="author-badge" style="margin-left:auto;">' + escapeHtml(a.author||'佚名') + '</span></div></div><div class="detail-content">' + contentHtml + '</div><div class="detail-actions"></div>';
+
+                // 渲染 KaTeX
+                try {
+                    if (typeof renderMathInElement === 'function' && typeof katex !== 'undefined') {
+                        renderMathInElement(container, {
+                            delimiters: [
+                                { left: '$$', right: '$$', display: true },
+                                { left: '$', right: '$', display: false },
+                                { left: '\\(', right: '\\)', display: false },
+                                { left: '\\[', right: '\\]', display: true }
+                            ],
+                            throwOnError: false,
+                            errorCallback: function(msg, err) {
+                                console.warn('KaTeX error:', msg, err);
+                                return '<span class="katex-error">公式渲染错误</span>';
+                            }
+                        });
+                    }
+                } catch(e) { console.warn('KaTeX 渲染异常:', e); }
+
+                // 渲染 Mermaid
+                try {
+                    var mermaidNodes = container.querySelectorAll('.mermaid');
+                    if (mermaidNodes.length > 0 && typeof mermaid !== 'undefined') {
+                        mermaid.run({ nodes: mermaidNodes, suppressErrors: true }).catch(function(err) {
+                            console.warn('Mermaid 渲染错误:', err);
+                        });
+                    }
+                } catch(e) { console.warn('Mermaid 渲染异常:', e); }
+
                 if (currentUser && currentUser.role === 'admin') {
                     var actions = container.querySelector('.detail-actions');
                     var eb = document.createElement('button'); eb.className = 'btn btn-sm'; eb.textContent = '✏️ 编辑'; eb.onclick = function() { openEditor(a.id); };
@@ -523,6 +613,7 @@
                     actions.appendChild(eb); actions.appendChild(db);
                 }
             }
+
             async function openEditor(id) {
                 var modal = $('#articleModal'), titleEl = $('#articleModalTitle'), submitBtn = $('#submitArticle');
                 if (id) {
@@ -747,7 +838,6 @@
                     } catch(e) { showToast('提交失败: '+e.message,'error'); }
                 });
 
-                // 管理面板标签切换
                 $('#articlesTabBtn').addEventListener('click', function() { currentTab = 'articles'; renderAdmin(); });
                 $('#reviewTabBtn').addEventListener('click', function() { currentTab = 'review'; loadApplications(); renderAdmin(); });
                 $('#quotaTabBtn').addEventListener('click', function() { currentTab = 'quota'; renderAdmin(); });
