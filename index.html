@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>墨韵·云笺 | 古风科技博客</title>
-    <!-- 内联 Markdown 解析器 -->
+    <!-- 内联 Markdown 解析器 (marked v4.3.0) -->
     <script>
         /*! marked v4.3.0 - a markdown parser */
         !function(e,t){if("object"==typeof exports&&"undefined"!=typeof module)t(exports);else if("function"==typeof define&&define.amd)define(["exports"],t);else {var n=e.marked=e.marked||{};t(n)}}(this,function(e){"use strict";function t(e){var t=e.match(/^(\s*)([^\s#].*?)(\s*)$/);return t?{raw:e,text:t[2].trim()}:null}function n(e){var t=e.match(/^(\s*)(#{1,6})\s*(.+?)(\s*#*)?$/);return t?{raw:e,depth:t[2].length,text:t[3].trim()}:null}function r(e){var t=e.match(/^(\s*)([*-])\s+(.+)$/);return t?{raw:e,text:t[3].trim()}:null}function i(e){var t=e.match(/^(\s*)(\d+)\.\s+(.+)$/);return t?{raw:e,number:parseInt(t[2]),text:t[3].trim()}:null}function o(e){var t=e.match(/^(\s*)>\s?(.+)/);return t?{raw:e,text:t[2].trim()}:null}function s(e){var t=e.match(/^(\s*)(`{3,}|~{3,})\s*(\S+)?\s*$/);return t?{raw:e,lang:t[3]||"",type:"code"}:null}function a(e){var t=e.match(/^(\s*)(`{1,2})([^`]+)\2/);return t?{raw:e,text:t[3].trim()}:null}function l(e){var t=e.match(/^!\[([^\]]*)\]\(([^)]+)\)/);return t?{raw:e,alt:t[1],href:t[2]}:null}function c(e){var t=e.match(/^\[([^\]]+)\]\(([^)]+)\)/);return t?{raw:e,text:t[1],href:t[2]}:null}function h(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function u(e){var n="";for(var r=0;r<e.length;r++){var i=e[r],o=i.raw;if(i.type==="heading"){var s=i.depth;n+="<h"+s+">"+h(i.text)+"</h"+s+">"}else if(i.type==="paragraph")n+="<p>"+h(i.text)+"</p>";else if(i.type==="list"){n+="<ul>";for(var a=0;a<i.items.length;a++)n+="<li>"+h(i.items[a])+"</li>";n+="</ul>"}else if(i.type==="ordered_list"){n+="<ol>";for(var l=0;l<i.items.length;l++)n+="<li>"+h(i.items[l])+"</li>";n+="</ol>"}else if(i.type==="blockquote")n+="<blockquote>"+h(i.text)+"</blockquote>";else if(i.type==="code")n+="<pre><code>"+h(i.text)+"</code></pre>";else if(i.type==="hr")n+="<hr>";else if(i.type==="image")n+='<img src="'+h(i.href)+'" alt="'+h(i.alt)+'">';else if(i.type==="link")n+='<a href="'+h(i.href)+'">'+h(i.text)+"</a>";else if(i.type==="inline_code")n+="<code>"+h(i.text)+"</code>"}return n}function p(e){var n=[],r="",i="",o=null;for(var s=0;s<e.length;s++){var a=e[s];if(a.trim()===""){if(o&&o.type==="paragraph"){o.text=r;o=null}r="";continue}if(!o){if(a.startsWith("#")){var l=n(a);if(l){o=l;n.push(o);continue}}if(a.startsWith(">")){var c=o(a);if(c){o=c;n.push(o);continue}}if(a.startsWith("```")||a.startsWith("~~~")){var h=s(a);if(h){o={type:"code",text:"",lang:h.lang};n.push(o);s++;while(s<e.length&&!e[s].startsWith("```")&&!e[s].startsWith("~~~")){o.text+=e[s]+"\n";s++}continue}}var u=r(a);if(u){o={type:"list",items:[u.text]};n.push(o);continue}var p=i(a);if(p){o={type:"ordered_list",items:[p.text],start:p.number};n.push(o);continue}var d=l(a);if(d){o={type:"image",alt:d.alt,href:d.href};n.push(o);continue}var f=c(a);if(f){o={type:"link",text:f.text,href:f.href};n.push(o);continue}if(/^(\*{3,}|-{3,}|_{3,})$/.test(a)){o={type:"hr"};n.push(o);continue}o={type:"paragraph",text:a}}else if(o.type==="paragraph")o.text+="\n"+a;else if(o.type==="list"){var g=r(a);if(g)o.items.push(g.text);else{o.text+="\n"+a}}else if(o.type==="ordered_list"){var m=i(a);if(m)o.items.push(m.text);else o.text+="\n"+a}}if(o&&o.type==="paragraph")o.text=r;return n}function d(e){var t=[];for(var n=0;n<e.length;n++){var r=e[n];if(r.startsWith("```")){var i=s(r);if(i){var o="",a=n+1;while(a<e.length&&!e[a].startsWith("```")){o+=e[a]+"\n";a++}t.push({type:"code",lang:i.lang,text:o});n=a;continue}}if(r.startsWith("#")){var l=n(r);if(l){t.push(l);continue}}if(r.startsWith(">")){var c=o(r);if(c){t.push(c);continue}}var h=r;t.push({type:"paragraph",text:h})}return t}function f(e){var t=[];for(var n=0;n<e.length;n++){var r=e[n];var i="";if(r.startsWith("- ")||r.startsWith("* ")){var o=r(a);if(o){var s=[o.text];n++;while(n<e.length&&(e[n].startsWith("- ")||e[n].startsWith("* "))){var l=r(e[n]);if(l)s.push(l.text);n++}t.push({type:"list",items:s});n--;continue}}if(/^\d+\.\s/.test(r)){var c=i(r);if(c){var h=[c.text];n++;while(n<e.length&&/^\d+\.\s/.test(e[n])){var u=i(e[n]);if(u)h.push(u.text);n++}t.push({type:"ordered_list",items:h,start:c.number});n--;continue}}if(r.match(/^!\[/)){var p=l(r);if(p){t.push(p);continue}}if(r.match(/^\[/)){var d=c(r);if(d){t.push(d);continue}}if(r.match(/`[^`]+`/)){var f=a(r);if(f){t.push({type:"inline_code",text:f.text});continue}}if(/^(\*{3,}|-{3,}|_{3,})$/.test(r)){t.push({type:"hr"});continue}t.push({type:"paragraph",text:r})}return t}function g(e){var t=e.split("\n");return u(f(t))}e.parse=g;e.lexer=f;e.parser=u;e.Renderer=function(){};e.Renderer.prototype.code=function(e,t){return"<pre><code>"+h(e)+"</code></pre>"};e.Renderer.prototype.blockquote=function(e){return"<blockquote>"+e+"</blockquote>"};e.Renderer.prototype.html=function(e){return e};e.Renderer.prototype.heading=function(e,t,n){return"<h"+t+">"+e+"</h"+t+">"};e.Renderer.prototype.hr=function(){return"<hr>"};e.Renderer.prototype.list=function(e,t){var n=t?"ol":"ul";return"<"+n+">"+e+"</"+n+">"};e.Renderer.prototype.listitem=function(e){return"<li>"+e+"</li>"};e.Renderer.prototype.paragraph=function(e){return"<p>"+e+"</p>"};e.Renderer.prototype.table=function(e,t){return"<table>"+t+e+"</table>"};e.Renderer.prototype.tablerow=function(e){return"<tr>"+e+"</tr>"};e.Renderer.prototype.tablecell=function(e,t){var n=t.header?"th":"td";return"<"+n+">"+e+"</"+n+">"};e.Renderer.prototype.strong=function(e){return"<strong>"+e+"</strong>"};e.Renderer.prototype.em=function(e){return"<em>"+e+"</em>"};e.Renderer.prototype.codespan=function(e){return"<code>"+e+"</code>"};e.Renderer.prototype.br=function(){return"<br>"};e.Renderer.prototype.del=function(e){return"<del>"+e+"</del>"};e.Renderer.prototype.link=function(e,t,n){return'<a href="'+t+'">'+e+"</a>"};e.Renderer.prototype.image=function(e,t,n){return'<img src="'+t+'" alt="'+e+'">'};e.Renderer.prototype.text=function(e){return e};e.setOptions=function(){}});
@@ -259,6 +259,8 @@
         .hidden { display: none !important; }
         .view { display: none; }
         .view.active { display: block; }
+        .quota-tip { font-size: 0.8rem; color: var(--cyan-neon); margin-left: 0.5rem; }
+        .quota-info { text-align: center; color: var(--cyan-neon); margin-bottom: 1rem; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -284,8 +286,9 @@
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索文章标题、摘要或标签...">
                 <div class="tag-filter" id="tagFilter"></div>
             </div>
-            <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;">
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
                 <button class="btn primary-btn hidden" id="applyArticleBtn">📝 申请发表</button>
+                <span id="applyQuota" class="quota-tip hidden"></span>
                 <button class="btn primary-btn hidden" id="newArticleBtn">📝 撰写新篇</button>
             </div>
             <div class="articles-grid" id="articlesGrid"></div>
@@ -368,6 +371,7 @@
         <div class="modal" style="max-width:640px;">
             <button class="close-btn" id="closeApplyModal">&times;</button>
             <h2>📝 申请发表文章</h2>
+            <p id="applyLimitInfo" class="quota-info"></p>
             <form onsubmit="return false">
                 <div class="input-group"><label>标题</label><input type="text" id="applyTitle"></div>
                 <div class="input-group"><label>摘要</label><input type="text" id="applySummary"></div>
@@ -394,6 +398,7 @@
             function calcReadTime(t) { var w = (t||'').replace(/[^\u4e00-\u9fa5a-zA-Z]/g,'').length; return Math.max(1, Math.round(w/400)); }
 
             var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null, showReview = false;
+            var applyQuotaRemaining = 0;
 
             async function apiCall(url, opt, silent) {
                 opt = opt || {}; silent = silent || false;
@@ -409,7 +414,6 @@
             }
 
             async function checkLogin() { var data = await apiCall('/api/me',{},true); currentUser = (data && data.username) ? data : null; updateUI(); }
-
             function updateUI() {
                 var g = $('#greetingText'), l = $('#loginBtn'), o = $('#logoutBtn'), a = $('#adminPanelBtn'),
                     n = $('#newArticleBtn'), ap = $('#applyArticleBtn');
@@ -429,7 +433,7 @@
                 }
                 if (currentView === 'list') { renderList(); renderTags(); }
                 if (currentView === 'admin') renderAdmin();
-                loadApplications();
+                updateApplyQuota();
             }
 
             async function login(u, p) {
@@ -457,6 +461,18 @@
                 try { pendingApps = await apiCall('/api/article-applications'); } catch(e) { pendingApps = []; }
                 var count = $('#pendingCount'); if (count) count.textContent = pendingApps.length;
                 if (showReview) renderReview();
+            }
+            async function updateApplyQuota() {
+                if (!currentUser || currentUser.role === 'admin') {
+                    $('#applyQuota').classList.add('hidden');
+                    return;
+                }
+                try {
+                    var data = await apiCall('/api/apply-quota');
+                    applyQuotaRemaining = data.remaining;
+                    $('#applyQuota').textContent = '剩余 ' + applyQuotaRemaining + ' 次';
+                    $('#applyQuota').classList.remove('hidden');
+                } catch(e) { $('#applyQuota').classList.add('hidden'); }
             }
 
             function getFiltered() {
@@ -626,10 +642,15 @@
                 window.addEventListener('scroll', function(){ topBtn.style.display = window.scrollY>500?'flex':'none'; });
                 topBtn.addEventListener('click', function(){ window.scrollTo({ top:0, behavior:'smooth' }); });
 
-                $('#applyArticleBtn').addEventListener('click', function(){ $('#applyModal').classList.add('active'); });
+                $('#applyArticleBtn').addEventListener('click', function(){
+                    if (applyQuotaRemaining <= 0) { showToast('今日申请次数已用尽，请明天再试', 'error'); return; }
+                    $('#applyLimitInfo').textContent = '今日还可提交 ' + applyQuotaRemaining + ' 次';
+                    $('#applyModal').classList.add('active');
+                });
                 $('#closeApplyModal').addEventListener('click', function(){ $('#applyModal').classList.remove('active'); });
                 $('#cancelApply').addEventListener('click', function(){ $('#applyModal').classList.remove('active'); });
                 $('#submitApply').addEventListener('click', async function(){
+                    if (applyQuotaRemaining <= 0) { showToast('今日申请次数已用尽', 'error'); return; }
                     var title=$('#applyTitle').value.trim(), content=$('#applyContent').value.trim();
                     if (!title||!content) return showToast('标题和内容不能为空','error');
                     var data = { title:title, content:content, summary:$('#applySummary').value.trim(), tags:$('#applyTags').value.split(',').map(function(t){return t.trim();}).filter(Boolean), seal:$('#applySeal').value.trim()||'墨' };
@@ -638,6 +659,7 @@
                         showToast('申请已提交，等待管理员审核');
                         $('#applyModal').classList.remove('active');
                         $('#applyTitle').value=''; $('#applyContent').value=''; $('#applySummary').value=''; $('#applyTags').value=''; $('#applySeal').value='墨';
+                        updateApplyQuota();
                     } catch(e) { showToast('提交失败: '+e.message,'error'); }
                 });
 
