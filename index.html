@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>墨韵·云笺 | 古风科技博客</title>
 
-    <!-- Markdown 解析 -->
+    <!-- ==================== 核心依赖 ==================== -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
-    <!-- 代码高亮 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- KaTeX 数学公式 -->
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css">
     <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-    <!-- Mermaid 图表 -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 
     <style>
@@ -31,21 +28,66 @@
             --radius-sm: 8px; --radius-md: 16px; --radius-lg: 24px;
             --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
+
+        /* 竹简皮肤 */
         .skin-bamboo {
-            --bg-deep: #4a3420; --bg-card: rgba(45,36,22,0.92); --gold: #c8a96e; --gold-bright: #e8d5a3;
-            --vermillion: #c5533b; --cyan-neon: #5ce6ff; --text-primary: #f0e6d2; --text-secondary: #c8b898; --text-muted: #9b8a70;
+            --bg-deep: #4a3420; --bg-card: rgba(45,36,22,0.92);
+            --gold: #c8a96e; --gold-bright: #e8d5a3; --gold-glow: rgba(200,169,110,0.6);
+            --vermillion: #c5533b; --vermillion-glow: rgba(197,83,59,0.6);
+            --cyan-neon: #5ce6ff; --cyan-glow: rgba(92,230,255,0.5);
+            --text-primary: #f0e6d2; --text-secondary: #c8b898; --text-muted: #9b8a70;
+            --border-subtle: rgba(200,169,110,0.3); --border-glow: rgba(200,169,110,0.6);
         }
+        .skin-bamboo .main-container {
+            border-left: 8px solid #5c3e22; border-right: 2px solid #3d2b14;
+            box-shadow: 20px 0 40px rgba(0,0,0,0.6); padding-left: 2rem;
+        }
+        .skin-bamboo .article-detail {
+            background: #4a3420; border-radius: 0; padding: 20px 10px;
+            border: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); position: relative;
+        }
+        .skin-bamboo .article-detail::before,
+        .skin-bamboo .article-detail::after {
+            content: ''; position: absolute; left: 10px; right: 10px; height: 4px;
+            background: repeating-linear-gradient(90deg, #8b6914 0px, #8b6914 8px, transparent 8px, transparent 16px);
+            opacity: 0.9; pointer-events: none; z-index: 1;
+        }
+        .skin-bamboo .article-detail::before { top: 12px; }
+        .skin-bamboo .article-detail::after { bottom: 12px; }
+        .skin-bamboo .article-detail .detail-content {
+            writing-mode: vertical-rl; height: 500px; max-height: 60vh;
+            overflow-x: auto; overflow-y: hidden; padding: 15px 5px;
+            background: repeating-linear-gradient(90deg, #7a5e3a 0px, #7a5e3a 30px, #4a3420 30px, #4a3420 32px);
+            background-attachment: scroll; direction: rtl;
+            font-family: var(--font-calligraphy); line-height: 1.8; color: #f0e6d2;
+        }
+        .skin-bamboo .article-detail .detail-content h1,
+        .skin-bamboo .article-detail .detail-content h2,
+        .skin-bamboo .article-detail .detail-content h3 { font-size: 1.4em; margin: 0.5em 0; }
+        .skin-bamboo .article-detail .detail-content p { margin: 0.5em 0; text-indent: 2em; }
+
+        /* 传国玉玺皮肤 */
         .skin-jade {
-            --bg-deep: #1a2a1a; --bg-card: rgba(20,40,20,0.9); --gold: #e0c080; --gold-bright: #ffe9b0;
-            --vermillion: #d94a4a; --cyan-neon: #6ee6ff; --text-primary: #e8f0e0; --text-secondary: #c0d0b8; --text-muted: #90a080;
+            --bg-deep: #1a2a1a; --bg-card: rgba(20,40,20,0.9);
+            --gold: #e0c080; --gold-bright: #ffe9b0; --gold-glow: rgba(224,192,128,0.8);
+            --vermillion: #d94a4a; --vermillion-glow: rgba(217,74,74,0.7);
+            --cyan-neon: #6ee6ff; --cyan-glow: rgba(110,230,255,0.6);
+            --text-primary: #e8f0e0; --text-secondary: #c0d0b8; --text-muted: #90a080;
+            --border-subtle: rgba(224,192,128,0.4); --border-glow: rgba(224,192,128,0.8);
         }
-        .skin-bamboo .main-container { border-left: 8px solid #5c3e22; border-right: 2px solid #3d2b14; box-shadow: 20px 0 40px rgba(0,0,0,0.6); padding-left: 2rem; }
-        .skin-bamboo .article-detail { background: #4a3420; border-radius: 0; padding: 20px 10px; border: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); position: relative; }
-        .skin-bamboo .article-detail::before, .skin-bamboo .article-detail::after { content: ''; position: absolute; left: 10px; right: 10px; height: 4px; background: repeating-linear-gradient(90deg, #8b6914 0px, #8b6914 8px, transparent 8px, transparent 16px); opacity: 0.9; pointer-events: none; z-index: 1; }
-        .skin-bamboo .article-detail::before { top: 12px; } .skin-bamboo .article-detail::after { bottom: 12px; }
-        .skin-bamboo .article-detail .detail-content { writing-mode: vertical-rl; height: 500px; max-height: 60vh; overflow-x: auto; overflow-y: hidden; padding: 15px 5px; background: repeating-linear-gradient(90deg, #7a5e3a 0px, #7a5e3a 30px, #4a3420 30px, #4a3420 32px); background-attachment: scroll; direction: rtl; font-family: var(--font-calligraphy); line-height: 1.8; color: #f0e6d2; }
-        .skin-jade .article-detail { background: #faf3e0; color: #3a2a1a; border-radius: 2px; padding: 50px 70px; box-shadow: 0 0 40px rgba(0,0,0,0.4); position: relative; overflow: hidden; border-top: 4px solid #d4b060; border-bottom: 4px solid #d4b060; }
-        .jade-axis { position: absolute; top: 20px; bottom: 20px; width: 24px; background: linear-gradient(to bottom, #f0e4c0, #c8a878, #f0e4c0); box-shadow: inset 0 0 10px rgba(0,0,0,0.4), 0 0 15px rgba(0,0,0,0.6); border-radius: 12px; pointer-events: none; z-index: 5; display: none; animation-duration: 2.5s; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+        .skin-jade .article-detail {
+            background: #faf3e0; color: #3a2a1a; border-radius: 2px;
+            padding: 50px 70px; box-shadow: 0 0 40px rgba(0,0,0,0.4);
+            position: relative; overflow: hidden;
+            border-top: 4px solid #d4b060; border-bottom: 4px solid #d4b060;
+        }
+        .jade-axis {
+            position: absolute; top: 20px; bottom: 20px; width: 24px;
+            background: linear-gradient(to bottom, #f0e4c0, #c8a878, #f0e4c0);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.4), 0 0 15px rgba(0,0,0,0.6);
+            border-radius: 12px; pointer-events: none; z-index: 5; display: none;
+            animation-duration: 2.5s; animation-timing-function: ease-out; animation-fill-mode: forwards;
+        }
         .skin-jade .jade-axis { display: block; }
         .jade-axis.left { left: 50%; transform: translateX(-50%); animation-name: axisMoveLeft; }
         .jade-axis.right { right: 50%; transform: translateX(50%); animation-name: axisMoveRight; }
@@ -53,36 +95,101 @@
         @keyframes axisMoveRight { 0% { right: 50%; transform: translateX(50%); } 100% { right: -12px; transform: translateX(0); } }
         .skin-jade .article-detail .detail-content { animation: contentUnfold 2.5s ease-out forwards; }
         @keyframes contentUnfold { 0% { clip-path: inset(0 50% 0 50%); } 100% { clip-path: inset(0 0 0 0); } }
-        .jade-seal { position: absolute; bottom: 20px; right: 50px; width: 100px; height: 100px; border: 4px solid var(--vermillion); border-radius: 8px; transform: rotate(7deg); display: none; align-items: center; justify-content: center; font-family: var(--font-calligraphy); font-size: 24px; color: var(--vermillion); opacity: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(200,60,40,0.6); pointer-events: none; white-space: pre; line-height: 1.2; text-align: center; z-index: 6; transition: opacity 0.8s ease 2.5s; }
+        .jade-seal {
+            position: absolute; bottom: 20px; right: 50px; width: 100px; height: 100px;
+            border: 4px solid var(--vermillion); border-radius: 8px; transform: rotate(7deg);
+            display: none; align-items: center; justify-content: center;
+            font-family: var(--font-calligraphy); font-size: 24px; color: var(--vermillion);
+            opacity: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 0 15px rgba(200,60,40,0.6); pointer-events: none;
+            white-space: pre; line-height: 1.2; text-align: center; z-index: 6;
+            transition: opacity 0.8s ease 2.5s;
+        }
         .skin-jade .jade-seal { display: flex; }
         .skin-jade .jade-seal.show-seal { opacity: 0.8; }
-        .annotation-tag { position: absolute; color: var(--vermillion); font-family: var(--font-calligraphy); font-size: 18px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; max-width: 200px; pointer-events: none; z-index: 10; }
-        .annotate-btn { position: absolute; top: 10px; right: 10px; z-index: 15; display: none; padding: 4px 10px; font-size: 13px; background: rgba(200,60,40,0.2); border: 1px solid var(--vermillion); color: var(--vermillion); border-radius: 6px; cursor: pointer; }
+
+        /* 朱批 */
+        .annotation-tag {
+            position: absolute; color: var(--vermillion); font-family: var(--font-calligraphy);
+            font-size: 18px; background: rgba(255,255,255,0.2); padding: 2px 6px;
+            border-radius: 4px; max-width: 200px; word-break: break-word;
+            pointer-events: none; z-index: 10; text-shadow: 0 0 4px rgba(200,60,40,0.8);
+        }
+        .annotate-btn {
+            position: absolute; top: 10px; right: 10px; z-index: 15; display: none;
+            padding: 4px 10px; font-size: 13px; background: rgba(200,60,40,0.2);
+            border: 1px solid var(--vermillion); color: var(--vermillion); border-radius: 6px; cursor: pointer;
+        }
         .skin-jade .annotate-btn { display: block; }
         .annotation-mode .detail-content { cursor: crosshair; user-select: none; }
 
+        /* 全局样式 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; font-size: 16px; }
-        body { font-family: var(--font-body); min-height: 100vh; background: var(--bg-deep); color: var(--text-primary); overflow-x: hidden; position: relative; line-height: 1.7; }
-        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 20% 30%, rgba(250,219,95,0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, rgba(125,249,255,0.07) 0%, transparent 50%), radial-gradient(ellipse at 40% 80%, rgba(255,107,107,0.06) 0%, transparent 55%); background-size: 200% 200%; animation: inkFlow 25s ease-in-out infinite alternate; }
+        body {
+            font-family: var(--font-body); min-height: 100vh; background: var(--bg-deep);
+            color: var(--text-primary); overflow-x: hidden; position: relative; line-height: 1.7;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%23fadb5f" stroke-width="1.5" opacity="0.8"/><circle cx="12" cy="12" r="5" fill="%23fadb5f" opacity="0.4"/></svg>') 12 12, auto;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at 20% 30%, rgba(250,219,95,0.12) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 50%, rgba(125,249,255,0.07) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 80%, rgba(255,107,107,0.06) 0%, transparent 55%);
+            background-size: 200% 200%; animation: inkFlow 25s ease-in-out infinite alternate;
+        }
         @keyframes inkFlow { 0% { background-position: 0% 0%; } 50% { background-position: 50% 70%; } 100% { background-position: 100% 30%; } }
         #particleCanvas, #rippleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         #particleCanvas { z-index: 1; } #rippleCanvas { z-index: 50; }
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.03) 3px, rgba(255,255,255,0.03) 6px); opacity: 0.6; }
-        .poem-float { position: fixed; bottom: 25px; left: 25px; z-index: 30; font-family: var(--font-calligraphy); font-size: 1.3rem; color: var(--gold-bright); opacity: 0.9; letter-spacing: 4px; text-shadow: 0 0 15px var(--gold-glow), 0 0 5px #fff; pointer-events: none; animation: poemFade 6s ease-in-out infinite; }
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.03) 3px, rgba(255,255,255,0.03) 6px);
+            opacity: 0.6;
+        }
+        .poem-float {
+            position: fixed; bottom: 25px; left: 25px; z-index: 30;
+            font-family: var(--font-calligraphy); font-size: 1.3rem;
+            color: var(--gold-bright); opacity: 0.9; letter-spacing: 4px;
+            text-shadow: 0 0 15px var(--gold-glow), 0 0 5px #fff;
+            pointer-events: none; animation: poemFade 6s ease-in-out infinite;
+        }
         @keyframes poemFade { 0%,100% { opacity: 0.7; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-5px); } }
         .main-container { position: relative; z-index: 2; width: 100%; max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
         .header { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 1rem 0 1.5rem; border-bottom: 1px solid var(--border-subtle); position: relative; }
-        .header::after { content: ''; position: absolute; bottom: -1px; left: 20%; width: 60%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), var(--cyan-neon), var(--gold), transparent); box-shadow: 0 0 20px var(--gold-glow), 0 0 10px var(--cyan-glow); animation: headerGlow 3s ease-in-out infinite alternate; }
+        .header::after {
+            content: ''; position: absolute; bottom: -1px; left: 20%; width: 60%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--cyan-neon), var(--gold), transparent);
+            box-shadow: 0 0 20px var(--gold-glow), 0 0 10px var(--cyan-glow);
+            animation: headerGlow 3s ease-in-out infinite alternate;
+        }
         @keyframes headerGlow { 0% { opacity: 0.6; } 100% { opacity: 1; } }
-        .plaque { position: relative; display: inline-block; padding: 0.6rem 2.5rem; background: linear-gradient(180deg, rgba(40,28,18,0.95) 0%, rgba(30,20,12,0.95) 100%); border: 2px solid #7a5a3a; border-radius: 6px; box-shadow: 0 0 0 1px #5a3a2a, 0 0 0 4px rgba(200,150,80,0.6), 0 0 0 6px #3a2a1a, 0 10px 30px rgba(0,0,0,0.6), 0 0 60px var(--gold-glow); text-align: center; animation: plaqueFloat 4s ease-in-out infinite; }
+        .plaque {
+            position: relative; display: inline-block; padding: 0.6rem 2.5rem;
+            background: linear-gradient(180deg, rgba(40,28,18,0.95) 0%, rgba(30,20,12,0.95) 100%);
+            border: 2px solid #7a5a3a; border-radius: 6px;
+            box-shadow: 0 0 0 1px #5a3a2a, 0 0 0 4px rgba(200,150,80,0.6), 0 0 0 6px #3a2a1a, 0 10px 30px rgba(0,0,0,0.6), 0 0 60px var(--gold-glow);
+            text-align: center; animation: plaqueFloat 4s ease-in-out infinite;
+        }
         @keyframes plaqueFloat { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-3px) rotate(0.3deg); } 75% { transform: translateY(2px) rotate(-0.2deg); } }
-        .plaque-title { font-family: var(--font-calligraphy); font-size: clamp(2rem, 4vw, 3rem); color: #ffe9b0; letter-spacing: 6px; text-shadow: 0 0 15px rgba(250,219,95,0.9), 0 0 30px rgba(200,160,80,0.6); animation: textShine 4s ease-in-out infinite alternate; }
+        .plaque-title {
+            font-family: var(--font-calligraphy); font-size: clamp(2rem, 4vw, 3rem);
+            color: #ffe9b0; letter-spacing: 6px;
+            text-shadow: 0 0 15px rgba(250,219,95,0.9), 0 0 30px rgba(200,160,80,0.6);
+            animation: textShine 4s ease-in-out infinite alternate;
+        }
         @keyframes textShine { 0% { text-shadow: 0 0 12px rgba(250,219,95,0.8); } 100% { text-shadow: 0 0 28px rgba(255,233,176,1); } }
         .subtitle { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-muted); letter-spacing: 2px; text-shadow: 0 0 8px var(--cyan-glow); }
         .user-area { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; margin-top: 0.3rem; }
         .greeting { font-size: 0.9rem; color: var(--text-secondary); background: rgba(255,250,240,0.08); padding: 0.3rem 0.9rem; border-radius: 20px; border: 1px solid rgba(250,219,95,0.4); }
-        .btn { font-family: var(--font-body); background: rgba(30,28,38,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(250,219,95,0.5); color: var(--text-primary); padding: 0.45rem 1.1rem; border-radius: 24px; font-size: 0.9rem; cursor: pointer; transition: all var(--transition-smooth); letter-spacing: 1px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .btn {
+            font-family: var(--font-body); background: rgba(30,28,38,0.8); backdrop-filter: blur(10px);
+            border: 1px solid rgba(250,219,95,0.5); color: var(--text-primary);
+            padding: 0.45rem 1.1rem; border-radius: 24px; font-size: 0.9rem;
+            cursor: pointer; transition: all var(--transition-smooth); letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
         .btn:hover { background: rgba(60,50,30,0.9); border-color: var(--gold); color: #fff; box-shadow: 0 0 25px var(--gold-glow); transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
         .btn.admin-btn { border-color: rgba(255,107,107,0.6); color: #f0a0a0; background: rgba(40,20,20,0.8); }
@@ -90,29 +197,58 @@
         .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; border-radius: 18px; }
         .btn-danger { border-color: rgba(255,107,107,0.6) !important; color: #f0a0a0 !important; }
         .toolbar { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.5rem; }
-        .search-box { flex: 1; min-width: 200px; padding: 0.5rem 1rem; background: rgba(30,28,38,0.8); backdrop-filter: blur(10px); border: 1px solid var(--border-subtle); border-radius: 24px; color: var(--text-primary); font-family: var(--font-body); font-size: 0.9rem; outline: none; }
+        .search-box {
+            flex: 1; min-width: 200px; padding: 0.5rem 1rem;
+            background: rgba(30,28,38,0.8); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle); border-radius: 24px;
+            color: var(--text-primary); font-family: var(--font-body); font-size: 0.9rem; outline: none;
+        }
         .search-box:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-glow); }
         .tag-filter { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-        .tag-chip { background: rgba(250,219,95,0.12); border: 1px solid rgba(250,219,95,0.35); padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.75rem; color: var(--gold); cursor: pointer; }
+        .tag-chip {
+            background: rgba(250,219,95,0.12); border: 1px solid rgba(250,219,95,0.35);
+            padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.75rem;
+            color: var(--gold); cursor: pointer;
+        }
         .tag-chip.active, .tag-chip:hover { background: rgba(250,219,95,0.3); border-color: var(--gold); color: #fff; }
         .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 1.3rem; }
         @media (max-width: 768px) { .articles-grid { grid-template-columns: 1fr; } }
-        .article-card { background: var(--bg-card); backdrop-filter: blur(18px); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.4rem 1.5rem; cursor: pointer; transition: all 0.5s; position: relative; overflow: hidden; box-shadow: 0 4px 25px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 0.7rem; }
-        .article-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,240,0.06), transparent); transition: left 0.7s ease; }
+        .article-card {
+            background: var(--bg-card); backdrop-filter: blur(18px);
+            border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+            padding: 1.4rem 1.5rem; cursor: pointer; transition: all 0.5s;
+            position: relative; overflow: hidden;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; gap: 0.7rem;
+        }
+        .article-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,240,0.06), transparent);
+            transition: left 0.7s ease;
+        }
         .article-card:hover::before { left: 100%; }
         .article-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 30px var(--gold-glow); border-color: var(--gold); }
         .article-card.pinned { border-color: var(--vermillion); }
         .article-card.pinned::after { content: '📌 置顶'; position: absolute; top: 12px; right: 15px; font-size: 0.7rem; color: var(--vermillion); }
         .card-header { display: flex; align-items: flex-start; gap: 0.8rem; }
         .card-title { font-family: var(--font-calligraphy); font-size: 1.3rem; color: var(--gold-bright); letter-spacing: 2px; flex: 1; }
-        .card-seal { width: 44px; height: 44px; background: var(--vermillion); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 0 15px var(--vermillion-glow); animation: sealGlow 2s ease-in-out infinite alternate; }
+        .card-seal {
+            width: 44px; height: 44px; background: var(--vermillion); color: #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; box-shadow: 0 0 15px var(--vermillion-glow);
+            animation: sealGlow 2s ease-in-out infinite alternate;
+        }
         @keyframes sealGlow { 0% { box-shadow: 0 0 8px rgba(255,107,107,0.6); } 100% { box-shadow: 0 0 22px rgba(255,120,110,0.9); } }
         .card-summary { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .card-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.78rem; color: var(--text-muted); margin-top: auto; }
         .card-tag { display: inline-block; background: rgba(250,219,95,0.15); border: 1px solid rgba(250,219,95,0.4); padding: 0.2rem 0.6rem; border-radius: 14px; font-size: 0.75rem; color: var(--gold); }
         .reading-time { display: flex; align-items: center; gap: 0.3rem; }
         .author-badge { font-size: 0.8rem; color: var(--gold); margin-left: auto; }
-        .article-detail { background: var(--bg-card); backdrop-filter: blur(14px); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.8rem; box-shadow: 0 0 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; }
+        .article-detail {
+            background: var(--bg-card); backdrop-filter: blur(14px);
+            border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+            padding: 1.8rem; box-shadow: 0 0 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+        }
         .detail-header { border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.2rem; margin-bottom: 1.5rem; }
         .detail-title { font-family: var(--font-calligraphy); font-size: clamp(1.6rem, 3vw, 2.4rem); color: var(--gold-bright); }
         .detail-meta { display: flex; flex-wrap: wrap; gap: 0.6rem; font-size: 0.85rem; color: var(--text-muted); }
@@ -217,6 +353,9 @@
     <div class="modal-overlay" id="confirmModal"><div class="modal" style="max-width:400px; text-align:center;"><h2 style="color:#f0a0a0;">⚠️ 确认删除</h2><p style="color:var(--text-secondary);">此操作不可恢复</p><div class="modal-actions"><button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button><button class="btn" id="cancelDeleteBtn">取 消</button></div><input type="hidden" id="confirmDeleteId"></div></div>
     <div class="modal-overlay" id="applyModal"><div class="modal" style="max-width:640px;"><button class="close-btn" id="closeApplyModal">&times;</button><h2>📝 申请发表文章</h2><p id="applyLimitInfo" class="quota-info"></p><form onsubmit="return false"><div class="input-group"><label>标题</label><input type="text" id="applyTitle"></div><div class="input-group"><label>摘要</label><input type="text" id="applySummary"></div><div class="input-group"><label>标签</label><input type="text" id="applyTags"></div><div class="input-group"><label>印章</label><input type="text" id="applySeal" maxlength="2"></div><div class="input-group"><label>内容</label><textarea id="applyContent"></textarea></div><div class="modal-actions"><button class="btn primary-btn" id="submitApply">提 交</button><button class="btn" id="cancelApply">取 消</button></div></form></div></div>
     <div class="modal-overlay" id="annotationModal"><div class="modal" style="max-width:400px;"><button class="close-btn" id="closeAnnotationModal">&times;</button><h2>🖌️ 朱笔批注</h2><div class="input-group"><label>批注内容</label><input type="text" id="annotationText"></div><div class="modal-actions"><button class="btn primary-btn" id="submitAnnotation">确 定</button></div></div></div>
+
+    <!-- 隐藏的文件上传控件 -->
+    <input type="file" id="mdFileInput" accept=".md" style="display:none;">
 
     <script>
         (function() {
@@ -353,7 +492,8 @@
                     currentAnnotationPos = { x, y };
                     $('#annotationModal').classList.add('active'); $('#annotationText').focus();
                 });
-                $('#annotateToggle').addEventListener('click', () => toggleAnnotationMode());
+                var annotateBtn = document.getElementById('annotateToggle');
+                if (annotateBtn) annotateBtn.addEventListener('click', () => toggleAnnotationMode());
                 if (a.annotations) a.annotations.forEach(ann => addAnnotationTag(ann.x, ann.y, ann.text));
                 resetJadeDecorations();
                 updateAnnotateButtonVisibility();
@@ -366,18 +506,22 @@
             }
             function addAnnotationTag(x, y, text) { var tag = document.createElement('div'); tag.className = 'annotation-tag'; tag.style.left = x + '%'; tag.style.top = y + '%'; tag.textContent = text; $('#articleDetailContent').appendChild(tag); }
 
-            $('#submitAnnotation').addEventListener('click', async function() {
-                var text = $('#annotationText').value.trim(); if (!text || !currentArticleId) return;
-                var article = articles.find(a => a.id === currentArticleId); if (!article) return;
-                if (!article.annotations) article.annotations = [];
-                article.annotations.push({ x: currentAnnotationPos.x, y: currentAnnotationPos.y, text });
-                try {
-                    await apiCall('/api/articles/' + currentArticleId, { method:'PUT', body: { annotations: article.annotations } });
-                    showToast('朱批已保存'); addAnnotationTag(currentAnnotationPos.x, currentAnnotationPos.y, text);
-                } catch(e) { showToast('保存失败', 'error'); }
-                $('#annotationModal').classList.remove('active'); $('#annotationText').value = '';
-            });
-            $('#closeAnnotationModal').addEventListener('click', () => $('#annotationModal').classList.remove('active'));
+            var submitAnnotationBtn = document.getElementById('submitAnnotation');
+            if (submitAnnotationBtn) {
+                submitAnnotationBtn.addEventListener('click', async function() {
+                    var text = $('#annotationText').value.trim(); if (!text || !currentArticleId) return;
+                    var article = articles.find(a => a.id === currentArticleId); if (!article) return;
+                    if (!article.annotations) article.annotations = [];
+                    article.annotations.push({ x: currentAnnotationPos.x, y: currentAnnotationPos.y, text });
+                    try {
+                        await apiCall('/api/articles/' + currentArticleId, { method:'PUT', body: { annotations: article.annotations } });
+                        showToast('朱批已保存'); addAnnotationTag(currentAnnotationPos.x, currentAnnotationPos.y, text);
+                    } catch(e) { showToast('保存失败', 'error'); }
+                    $('#annotationModal').classList.remove('active'); $('#annotationText').value = '';
+                });
+            }
+            var closeAnnotationModalBtn = document.getElementById('closeAnnotationModal');
+            if (closeAnnotationModalBtn) closeAnnotationModalBtn.addEventListener('click', () => $('#annotationModal').classList.remove('active'));
 
             async function openEditor(id) {
                 var modal = $('#articleModal'), titleEl = $('#articleModalTitle'), submitBtn = $('#submitArticle');
@@ -446,19 +590,32 @@
             async function approveApplication(id) { try { await apiCall('/api/article-applications/' + id + '/approve', { method:'POST' }); showToast('已批准并发布'); } catch(e) { showToast('操作失败', 'error'); } await loadApplications(); await loadArticles(); if (currentView==='list') { renderList(); renderTags(); } }
             async function rejectApplication(id) { try { await apiCall('/api/article-applications/' + id, { method:'DELETE' }); showToast('已拒绝'); } catch(e) { showToast('操作失败', 'error'); } await loadApplications(); }
 
+            // 修复后的 .md 导入功能
             function initMdImport() {
-                $('#importMdBtn').addEventListener('click', () => $('#mdFileInput').click());
-                $('#mdFileInput').addEventListener('change', function(e) {
-                    var file = e.target.files[0]; if (!file) return;
+                var importBtn = document.getElementById('importMdBtn');
+                var fileInput = document.getElementById('mdFileInput');
+                if (!importBtn || !fileInput) return;
+                importBtn.addEventListener('click', function() { fileInput.click(); });
+                fileInput.addEventListener('change', function(e) {
+                    var file = e.target.files[0];
+                    if (!file) return;
                     var reader = new FileReader();
-                    reader.onload = function(ev) { $('#articleTitle').value = file.name.replace(/\.md$/i, ''); $('#articleContent').value = ev.target.result; showToast('已导入 ' + file.name); };
+                    reader.onload = function(ev) {
+                        var titleInput = document.getElementById('articleTitle');
+                        var contentInput = document.getElementById('articleContent');
+                        if (titleInput) titleInput.value = file.name.replace(/\.md$/i, '');
+                        if (contentInput) contentInput.value = ev.target.result;
+                        showToast('已导入 ' + file.name, 'success');
+                    };
+                    reader.onerror = function() { showToast('文件读取失败', 'error'); };
                     reader.readAsText(file, 'UTF-8');
-                    this.value = '';
+                    fileInput.value = '';
                 });
             }
 
+            // 特效
             function initRipples() {
-                var canvas = $('#rippleCanvas'), ctx = canvas.getContext('2d'), w, h, ripples = [];
+                var canvas = document.getElementById('rippleCanvas'), ctx = canvas.getContext('2d'), w, h, ripples = [];
                 function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
                 window.addEventListener('resize', resize); resize();
                 document.addEventListener('click', function(e) {
@@ -478,7 +635,7 @@
                 animate();
             }
             function initParticles() {
-                var canvas = $('#particleCanvas'), ctx = canvas.getContext('2d'), w, h, particles = [];
+                var canvas = document.getElementById('particleCanvas'), ctx = canvas.getContext('2d'), w, h, particles = [];
                 function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
                 window.addEventListener('resize', resize); resize();
                 function drawPetal(ctx, x, y, size, rot, color) { ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.fillStyle=color; ctx.beginPath(); ctx.ellipse(0,0,size*0.6,size*0.2,0,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(0,0,size*0.2,size*0.6,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
