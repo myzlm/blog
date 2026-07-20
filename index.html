@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>墨韵·云笺 | 古风科技博客</title>
 
-    <!-- ==================== 核心依赖 ==================== -->
+    <!-- Markdown 解析 -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <!-- 代码高亮 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- KaTeX 数学公式 -->
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css">
     <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <!-- Mermaid 图表 -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 
     <style>
@@ -29,32 +32,18 @@
             --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .skin-bamboo {
-            --bg-deep: #4a3420; --bg-card: rgba(45,36,22,0.92);
-            --gold: #c8a96e; --gold-bright: #e8d5a3; --gold-glow: rgba(200,169,110,0.6);
-            --vermillion: #c5533b; --vermillion-glow: rgba(197,83,59,0.6);
-            --cyan-neon: #5ce6ff; --cyan-glow: rgba(92,230,255,0.5);
-            --text-primary: #f0e6d2; --text-secondary: #c8b898; --text-muted: #9b8a70;
-            --border-subtle: rgba(200,169,110,0.3); --border-glow: rgba(200,169,110,0.6);
+            --bg-deep: #4a3420; --bg-card: rgba(45,36,22,0.92); --gold: #c8a96e; --gold-bright: #e8d5a3;
+            --vermillion: #c5533b; --cyan-neon: #5ce6ff; --text-primary: #f0e6d2; --text-secondary: #c8b898; --text-muted: #9b8a70;
         }
         .skin-jade {
-            --bg-deep: #1a2a1a; --bg-card: rgba(20,40,20,0.9);
-            --gold: #e0c080; --gold-bright: #ffe9b0; --gold-glow: rgba(224,192,128,0.8);
-            --vermillion: #d94a4a; --vermillion-glow: rgba(217,74,74,0.7);
-            --cyan-neon: #6ee6ff; --cyan-glow: rgba(110,230,255,0.6);
-            --text-primary: #e8f0e0; --text-secondary: #c0d0b8; --text-muted: #90a080;
-            --border-subtle: rgba(224,192,128,0.4); --border-glow: rgba(224,192,128,0.8);
+            --bg-deep: #1a2a1a; --bg-card: rgba(20,40,20,0.9); --gold: #e0c080; --gold-bright: #ffe9b0;
+            --vermillion: #d94a4a; --cyan-neon: #6ee6ff; --text-primary: #e8f0e0; --text-secondary: #c0d0b8; --text-muted: #90a080;
         }
-
-        /* 竹简皮肤细节 */
         .skin-bamboo .main-container { border-left: 8px solid #5c3e22; border-right: 2px solid #3d2b14; box-shadow: 20px 0 40px rgba(0,0,0,0.6); padding-left: 2rem; }
         .skin-bamboo .article-detail { background: #4a3420; border-radius: 0; padding: 20px 10px; border: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); position: relative; }
         .skin-bamboo .article-detail::before, .skin-bamboo .article-detail::after { content: ''; position: absolute; left: 10px; right: 10px; height: 4px; background: repeating-linear-gradient(90deg, #8b6914 0px, #8b6914 8px, transparent 8px, transparent 16px); opacity: 0.9; pointer-events: none; z-index: 1; }
         .skin-bamboo .article-detail::before { top: 12px; } .skin-bamboo .article-detail::after { bottom: 12px; }
         .skin-bamboo .article-detail .detail-content { writing-mode: vertical-rl; height: 500px; max-height: 60vh; overflow-x: auto; overflow-y: hidden; padding: 15px 5px; background: repeating-linear-gradient(90deg, #7a5e3a 0px, #7a5e3a 30px, #4a3420 30px, #4a3420 32px); background-attachment: scroll; direction: rtl; font-family: var(--font-calligraphy); line-height: 1.8; color: #f0e6d2; }
-        .skin-bamboo .article-detail .detail-content h1, .skin-bamboo .article-detail .detail-content h2, .skin-bamboo .article-detail .detail-content h3 { font-size: 1.4em; margin: 0.5em 0; }
-        .skin-bamboo .article-detail .detail-content p { margin: 0.5em 0; text-indent: 2em; }
-
-        /* 传国玉玺皮肤细节 */
         .skin-jade .article-detail { background: #faf3e0; color: #3a2a1a; border-radius: 2px; padding: 50px 70px; box-shadow: 0 0 40px rgba(0,0,0,0.4); position: relative; overflow: hidden; border-top: 4px solid #d4b060; border-bottom: 4px solid #d4b060; }
         .jade-axis { position: absolute; top: 20px; bottom: 20px; width: 24px; background: linear-gradient(to bottom, #f0e4c0, #c8a878, #f0e4c0); box-shadow: inset 0 0 10px rgba(0,0,0,0.4), 0 0 15px rgba(0,0,0,0.6); border-radius: 12px; pointer-events: none; z-index: 5; display: none; animation-duration: 2.5s; animation-timing-function: ease-out; animation-fill-mode: forwards; }
         .skin-jade .jade-axis { display: block; }
@@ -67,17 +56,14 @@
         .jade-seal { position: absolute; bottom: 20px; right: 50px; width: 100px; height: 100px; border: 4px solid var(--vermillion); border-radius: 8px; transform: rotate(7deg); display: none; align-items: center; justify-content: center; font-family: var(--font-calligraphy); font-size: 24px; color: var(--vermillion); opacity: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(200,60,40,0.6); pointer-events: none; white-space: pre; line-height: 1.2; text-align: center; z-index: 6; transition: opacity 0.8s ease 2.5s; }
         .skin-jade .jade-seal { display: flex; }
         .skin-jade .jade-seal.show-seal { opacity: 0.8; }
-
-        /* 朱批 */
-        .annotation-tag { position: absolute; color: var(--vermillion); font-family: var(--font-calligraphy); font-size: 18px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; max-width: 200px; word-break: break-word; pointer-events: none; z-index: 10; text-shadow: 0 0 4px rgba(200,60,40,0.8); }
+        .annotation-tag { position: absolute; color: var(--vermillion); font-family: var(--font-calligraphy); font-size: 18px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; max-width: 200px; pointer-events: none; z-index: 10; }
         .annotate-btn { position: absolute; top: 10px; right: 10px; z-index: 15; display: none; padding: 4px 10px; font-size: 13px; background: rgba(200,60,40,0.2); border: 1px solid var(--vermillion); color: var(--vermillion); border-radius: 6px; cursor: pointer; }
         .skin-jade .annotate-btn { display: block; }
         .annotation-mode .detail-content { cursor: crosshair; user-select: none; }
 
-        /* 全局 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; font-size: 16px; }
-        body { font-family: var(--font-body); min-height: 100vh; background: var(--bg-deep); color: var(--text-primary); overflow-x: hidden; position: relative; line-height: 1.7; cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%23fadb5f" stroke-width="1.5" opacity="0.8"/><circle cx="12" cy="12" r="5" fill="%23fadb5f" opacity="0.4"/></svg>') 12 12, auto; }
+        body { font-family: var(--font-body); min-height: 100vh; background: var(--bg-deep); color: var(--text-primary); overflow-x: hidden; position: relative; line-height: 1.7; }
         body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 20% 30%, rgba(250,219,95,0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, rgba(125,249,255,0.07) 0%, transparent 50%), radial-gradient(ellipse at 40% 80%, rgba(255,107,107,0.06) 0%, transparent 55%); background-size: 200% 200%; animation: inkFlow 25s ease-in-out infinite alternate; }
         @keyframes inkFlow { 0% { background-position: 0% 0%; } 50% { background-position: 50% 70%; } 100% { background-position: 100% 30%; } }
         #particleCanvas, #rippleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -226,80 +212,11 @@
     </div>
 
     <!-- 模态框 -->
-    <div class="modal-overlay" id="loginModal">
-        <div class="modal">
-            <button class="close-btn" id="closeLoginModal">&times;</button>
-            <h2>🔑 登录云笺</h2>
-            <form onsubmit="return false">
-                <div class="input-group"><label>账号</label><input type="text" id="loginUsername" autocomplete="username"></div>
-                <div class="input-group"><label>密码</label><input type="password" id="loginPassword" autocomplete="current-password"></div>
-                <div class="modal-actions"><button class="btn primary-btn" id="submitLogin">登 录</button></div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="articleModal">
-        <div class="modal" style="max-width:640px;">
-            <button class="close-btn" id="closeArticleModal">&times;</button>
-            <h2 id="articleModalTitle">📝 撰写文章</h2>
-            <form onsubmit="return false">
-                <div class="input-group"><label>标题</label><input type="text" id="articleTitle"></div>
-                <div class="input-group"><label>摘要</label><input type="text" id="articleSummary"></div>
-                <div class="input-group"><label>标签（逗号分隔）</label><input type="text" id="articleTags"></div>
-                <div class="input-group"><label>印章</label><input type="text" id="articleSeal" maxlength="2" placeholder="墨"></div>
-                <div class="input-group"><label>置顶</label><input type="checkbox" id="articlePinned"> 置顶</div>
-                <div class="input-group"><label>内容</label><textarea id="articleContent"></textarea></div>
-                <div class="modal-actions" style="justify-content:space-between;">
-                    <button type="button" class="btn btn-sm" id="importMdBtn">📄 导入 .md</button>
-                    <div style="display:flex; gap:1rem;">
-                        <button class="btn primary-btn" id="submitArticle">发 布</button>
-                        <button class="btn" id="cancelArticle">取 消</button>
-                    </div>
-                </div>
-                <input type="hidden" id="articleEditId">
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal" style="max-width:400px; text-align:center;">
-            <h2 style="color:#f0a0a0;">⚠️ 确认删除</h2>
-            <p style="color:var(--text-secondary);">此操作不可恢复</p>
-            <div class="modal-actions">
-                <button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
-                <button class="btn" id="cancelDeleteBtn">取 消</button>
-            </div>
-            <input type="hidden" id="confirmDeleteId">
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="applyModal">
-        <div class="modal" style="max-width:640px;">
-            <button class="close-btn" id="closeApplyModal">&times;</button>
-            <h2>📝 申请发表文章</h2>
-            <p id="applyLimitInfo" class="quota-info"></p>
-            <form onsubmit="return false">
-                <div class="input-group"><label>标题</label><input type="text" id="applyTitle"></div>
-                <div class="input-group"><label>摘要</label><input type="text" id="applySummary"></div>
-                <div class="input-group"><label>标签</label><input type="text" id="applyTags"></div>
-                <div class="input-group"><label>印章</label><input type="text" id="applySeal" maxlength="2"></div>
-                <div class="input-group"><label>内容</label><textarea id="applyContent"></textarea></div>
-                <div class="modal-actions">
-                    <button class="btn primary-btn" id="submitApply">提 交</button>
-                    <button class="btn" id="cancelApply">取 消</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="annotationModal">
-        <div class="modal" style="max-width:400px;">
-            <button class="close-btn" id="closeAnnotationModal">&times;</button>
-            <h2>🖌️ 朱笔批注</h2>
-            <div class="input-group"><label>批注内容</label><input type="text" id="annotationText"></div>
-            <div class="modal-actions"><button class="btn primary-btn" id="submitAnnotation">确 定</button></div>
-        </div>
-    </div>
+    <div class="modal-overlay" id="loginModal"><div class="modal"><button class="close-btn" id="closeLoginModal">&times;</button><h2>🔑 登录云笺</h2><form onsubmit="return false"><div class="input-group"><label>账号</label><input type="text" id="loginUsername" autocomplete="username"></div><div class="input-group"><label>密码</label><input type="password" id="loginPassword" autocomplete="current-password"></div><div class="modal-actions"><button class="btn primary-btn" id="submitLogin">登 录</button></div></form></div></div>
+    <div class="modal-overlay" id="articleModal"><div class="modal" style="max-width:640px;"><button class="close-btn" id="closeArticleModal">&times;</button><h2 id="articleModalTitle">📝 撰写文章</h2><form onsubmit="return false"><div class="input-group"><label>标题</label><input type="text" id="articleTitle"></div><div class="input-group"><label>摘要</label><input type="text" id="articleSummary"></div><div class="input-group"><label>标签（逗号分隔）</label><input type="text" id="articleTags"></div><div class="input-group"><label>印章</label><input type="text" id="articleSeal" maxlength="2" placeholder="墨"></div><div class="input-group"><label>置顶</label><input type="checkbox" id="articlePinned"> 置顶</div><div class="input-group"><label>内容</label><textarea id="articleContent"></textarea></div><div class="modal-actions" style="justify-content:space-between;"><button type="button" class="btn btn-sm" id="importMdBtn">📄 导入 .md</button><div style="display:flex; gap:1rem;"><button class="btn primary-btn" id="submitArticle">发 布</button><button class="btn" id="cancelArticle">取 消</button></div></div><input type="hidden" id="articleEditId"></form></div></div>
+    <div class="modal-overlay" id="confirmModal"><div class="modal" style="max-width:400px; text-align:center;"><h2 style="color:#f0a0a0;">⚠️ 确认删除</h2><p style="color:var(--text-secondary);">此操作不可恢复</p><div class="modal-actions"><button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button><button class="btn" id="cancelDeleteBtn">取 消</button></div><input type="hidden" id="confirmDeleteId"></div></div>
+    <div class="modal-overlay" id="applyModal"><div class="modal" style="max-width:640px;"><button class="close-btn" id="closeApplyModal">&times;</button><h2>📝 申请发表文章</h2><p id="applyLimitInfo" class="quota-info"></p><form onsubmit="return false"><div class="input-group"><label>标题</label><input type="text" id="applyTitle"></div><div class="input-group"><label>摘要</label><input type="text" id="applySummary"></div><div class="input-group"><label>标签</label><input type="text" id="applyTags"></div><div class="input-group"><label>印章</label><input type="text" id="applySeal" maxlength="2"></div><div class="input-group"><label>内容</label><textarea id="applyContent"></textarea></div><div class="modal-actions"><button class="btn primary-btn" id="submitApply">提 交</button><button class="btn" id="cancelApply">取 消</button></div></form></div></div>
+    <div class="modal-overlay" id="annotationModal"><div class="modal" style="max-width:400px;"><button class="close-btn" id="closeAnnotationModal">&times;</button><h2>🖌️ 朱笔批注</h2><div class="input-group"><label>批注内容</label><input type="text" id="annotationText"></div><div class="modal-actions"><button class="btn primary-btn" id="submitAnnotation">确 定</button></div></div></div>
 
     <script>
         (function() {
@@ -339,7 +256,7 @@
                 } catch(e) { if(silent) return null; throw e; }
             }
 
-            // ========== 皮肤与特效管理 ==========
+            // 皮肤管理
             function applySkin(skin) {
                 document.body.classList.remove('skin-default', 'skin-bamboo', 'skin-jade');
                 if (skin === 'default') document.body.classList.add('skin-default');
@@ -377,7 +294,7 @@
             }
             function hideAnnotationInput() { var box = $('#annotationInputBox'); if (box) { box.style.display = 'none'; $('#annotationText').value = ''; } }
 
-            // ========== 用户状态 ==========
+            // 用户
             async function checkLogin() { var data = await apiCall('/api/me',{},true); currentUser = (data && data.username) ? data : null; updateUI(); }
             function updateUI() {
                 var g = $('#greetingText'), l = $('#loginBtn'), o = $('#logoutBtn'), a = $('#adminPanelBtn'), n = $('#newArticleBtn'), ap = $('#applyArticleBtn');
@@ -386,10 +303,7 @@
                     l.classList.add('hidden'); o.classList.remove('hidden');
                     if (currentUser.role === 'admin') { a.classList.remove('hidden'); n.classList.remove('hidden'); ap.classList.add('hidden'); }
                     else { a.classList.add('hidden'); n.classList.add('hidden'); ap.classList.remove('hidden'); }
-                } else {
-                    g.textContent = '未登录·过客'; l.classList.remove('hidden'); o.classList.add('hidden');
-                    a.classList.add('hidden'); n.classList.add('hidden'); ap.classList.add('hidden');
-                }
+                } else { g.textContent = '未登录·过客'; l.classList.remove('hidden'); o.classList.add('hidden'); a.classList.add('hidden'); n.classList.add('hidden'); ap.classList.add('hidden'); }
                 if (currentView === 'list') { renderList(); renderTags(); }
                 if (currentView === 'admin') renderAdmin();
                 updateApplyQuota();
@@ -397,25 +311,20 @@
             async function login(u, p) { var data = await apiCall('/api/login', { method:'POST', body:{username:u, password:p} }); currentUser = { username:data.username, role:data.role }; updateUI(); showToast('欢迎回来，' + data.username); }
             async function logout() { await apiCall('/api/logout',{method:'POST'},true); currentUser = null; updateUI(); showToast('已登出'); switchView('list'); }
             function switchView(v) {
-                currentView = v;
-                $$('.view').forEach(view => view.classList.remove('active'));
+                currentView = v; $$('.view').forEach(view => view.classList.remove('active'));
                 var target = $('#view' + v.charAt(0).toUpperCase() + v.slice(1)); if (target) target.classList.add('active');
-                if (v === 'list') { renderList(); renderTags(); }
-                if (v === 'admin') { currentTab = 'articles'; renderAdmin(); }
+                if (v === 'list') { renderList(); renderTags(); } else if (v === 'admin') { currentTab = 'articles'; renderAdmin(); }
                 window.scrollTo({ top:0 });
             }
 
-            // ========== 数据加载 ==========
             async function loadArticles() { try { var data = await apiCall('/api/articles'); articles = Array.isArray(data) ? data : []; } catch(e) { articles = []; } articles.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0) || new Date(b.createdAt) - new Date(a.createdAt)); }
             async function loadApplications() { if (!currentUser || currentUser.role !== 'admin') return; try { pendingApps = await apiCall('/api/article-applications'); } catch(e) { pendingApps = []; } $('#pendingCount').textContent = pendingApps.length; if (currentTab === 'review') renderReview(); }
             async function updateApplyQuota() { if (!currentUser || currentUser.role === 'admin') { $('#applyQuota').classList.add('hidden'); return; } try { var data = await apiCall('/api/apply-quota'); applyQuotaRemaining = data.remaining; $('#applyQuota').textContent = '剩余 ' + applyQuotaRemaining + ' 次'; $('#applyQuota').classList.remove('hidden'); } catch(e) { $('#applyQuota').classList.add('hidden'); } }
 
-            // ========== 文章列表与筛选 ==========
             function getFiltered() { var s = $('#searchInput') ? $('#searchInput').value.trim().toLowerCase() : ''; return articles.filter(a => { var ms = true; if (s) { var t = (a.title||'').toLowerCase(), sm = (a.summary||'').toLowerCase(), tg = (a.tags||[]).join(' ').toLowerCase(); ms = t.includes(s) || sm.includes(s) || tg.includes(s); } return ms && (!activeTag || (a.tags && a.tags.includes(activeTag))); }); }
             function renderList() { var grid = $('#articlesGrid'), empty = $('#emptyState'); var filtered = getFiltered(); if (!filtered.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; } empty.classList.add('hidden'); grid.innerHTML = filtered.map(a => `<div class="article-card${a.pinned?' pinned':''}" data-id="${escapeHtml(a.id)}"><div class="card-header"><span class="card-title">${escapeHtml(a.title)}</span><span class="card-seal">${escapeHtml(a.seal||'墨')}</span></div><p class="card-summary">${escapeHtml(a.summary||'')}</p><div class="card-meta"><span class="card-date">${formatDate(a.createdAt)}</span><span class="reading-time">${calcReadTime(a.content)} 分钟</span>${(a.tags||[]).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('')}<span class="author-badge">${escapeHtml(a.author||'佚名')}</span></div></div>`).join(''); grid.onclick = e => { var card = e.target.closest('.article-card'); if (card) viewArticle(card.dataset.id); }; }
             function renderTags() { var all = {}; articles.forEach(a => (a.tags||[]).forEach(t => all[t]=true)); var arr = Object.keys(all); $('#tagFilter').innerHTML = '<span class="tag-chip' + (activeTag?'':' active') + '" data-tag="">全部</span>' + arr.map(t => `<span class="tag-chip${activeTag===t?' active':''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join(''); $('#tagFilter').onclick = e => { if (e.target.classList.contains('tag-chip')) { activeTag = e.target.dataset.tag || null; renderList(); renderTags(); } }; }
 
-            // ========== 文章详情 ==========
             async function viewArticle(id) {
                 try { var a = await apiCall('/api/articles/' + encodeURIComponent(id)); if (!a) { showToast('文章不存在','error'); return; } renderDetail(a); switchView('detail'); currentArticleId = id; } catch(e) { showToast('加载失败: ' + e.message, 'error'); }
             }
@@ -457,7 +366,6 @@
             }
             function addAnnotationTag(x, y, text) { var tag = document.createElement('div'); tag.className = 'annotation-tag'; tag.style.left = x + '%'; tag.style.top = y + '%'; tag.textContent = text; $('#articleDetailContent').appendChild(tag); }
 
-            // ========== 批注保存 ==========
             $('#submitAnnotation').addEventListener('click', async function() {
                 var text = $('#annotationText').value.trim(); if (!text || !currentArticleId) return;
                 var article = articles.find(a => a.id === currentArticleId); if (!article) return;
@@ -471,7 +379,6 @@
             });
             $('#closeAnnotationModal').addEventListener('click', () => $('#annotationModal').classList.remove('active'));
 
-            // ========== 文章编辑 ==========
             async function openEditor(id) {
                 var modal = $('#articleModal'), titleEl = $('#articleModalTitle'), submitBtn = $('#submitArticle');
                 if (id) {
@@ -498,8 +405,7 @@
                     else { await apiCall('/api/articles', { method:'POST', body:data }); showToast('文章已发布'); }
                     $('#articleModal').classList.remove('active');
                     await loadArticles();
-                    if (currentView==='list') { renderList(); renderTags(); }
-                    if (currentView==='admin') renderAdmin();
+                    if (currentView==='list') { renderList(); renderTags(); } else if (currentView==='admin') renderAdmin();
                 } catch(e) { showToast('操作失败: ' + e.message, 'error'); }
             }
             function confirmDel(id, title) { pendingDeleteId = id; $('#confirmModal').classList.add('active'); $('#confirmModal').querySelector('p').textContent = '此操作不可恢复，确定要删除「' + (title||'这篇文章') + '」吗？'; }
@@ -511,7 +417,6 @@
                 if (currentView==='list') { renderList(); renderTags(); } else if (currentView==='admin') renderAdmin(); else if (currentView==='detail') switchView('list');
             }
 
-            // ========== 管理面板 ==========
             function renderAdmin() {
                 var container = $('#adminArticlesList'), reviewPanel = $('#reviewPanel'), quotaPanel = $('#quotaPanel');
                 container.style.display = reviewPanel.style.display = quotaPanel.style.display = 'none';
@@ -519,11 +424,8 @@
                     container.style.display = 'block';
                     container.innerHTML = articles.map(a => `<div class="article-manage-item"><div class="item-info"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-date">${formatDate(a.createdAt)} by ${escapeHtml(a.author||'佚名')}</span></div><div class="item-actions"><button class="btn btn-sm edit-btn" data-id="${escapeHtml(a.id)}">✏️</button><button class="btn btn-sm btn-danger delete-btn" data-id="${escapeHtml(a.id)}">🗑️</button></div></div>`).join('');
                     container.onclick = e => { var btn = e.target; if (btn.classList.contains('edit-btn')) openEditor(btn.dataset.id); else if (btn.classList.contains('delete-btn')) confirmDel(btn.dataset.id, btn.dataset.title); };
-                } else if (currentTab === 'review') {
-                    reviewPanel.style.display = 'block'; renderReview();
-                } else if (currentTab === 'quota') {
-                    quotaPanel.style.display = 'block'; renderQuota();
-                }
+                } else if (currentTab === 'review') { reviewPanel.style.display = 'block'; renderReview(); }
+                else if (currentTab === 'quota') { quotaPanel.style.display = 'block'; renderQuota(); }
             }
             function renderReview() {
                 var container = $('#reviewList');
@@ -544,7 +446,6 @@
             async function approveApplication(id) { try { await apiCall('/api/article-applications/' + id + '/approve', { method:'POST' }); showToast('已批准并发布'); } catch(e) { showToast('操作失败', 'error'); } await loadApplications(); await loadArticles(); if (currentView==='list') { renderList(); renderTags(); } }
             async function rejectApplication(id) { try { await apiCall('/api/article-applications/' + id, { method:'DELETE' }); showToast('已拒绝'); } catch(e) { showToast('操作失败', 'error'); } await loadApplications(); }
 
-            // ========== 导入 .md ==========
             function initMdImport() {
                 $('#importMdBtn').addEventListener('click', () => $('#mdFileInput').click());
                 $('#mdFileInput').addEventListener('change', function(e) {
@@ -556,7 +457,6 @@
                 });
             }
 
-            // ========== 特效 ==========
             function initRipples() {
                 var canvas = $('#rippleCanvas'), ctx = canvas.getContext('2d'), w, h, ripples = [];
                 function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
@@ -594,7 +494,6 @@
             var poemIdx = 0;
             setInterval(() => { poemIdx = (poemIdx+1)%poems.length; var el = document.getElementById('poemFloat'); if(el) el.textContent = poems[poemIdx]; }, 10000);
 
-            // ========== 事件绑定 ==========
             function bindEvents() {
                 $('#loginBtn').addEventListener('click', () => $('#loginModal').classList.add('active'));
                 $('#closeLoginModal').addEventListener('click', () => $('#loginModal').classList.remove('active'));
@@ -647,7 +546,6 @@
                 $$('.modal-overlay').forEach(ov => { ov.addEventListener('click', function(e) { if (e.target === ov) ov.classList.remove('active'); }); });
             }
 
-            // ========== 皮肤面板初始化 ==========
             function initStylePanel() {
                 document.getElementById('stylePanel').addEventListener('click', function(e) {
                     if (e.target.classList.contains('skin-btn')) applySkin(e.target.dataset.skin);
@@ -659,15 +557,8 @@
             window._blogApp = { viewArticle, editArticle: openEditor, confirmDeleteArticle: confirmDel };
 
             async function init() {
-                initRipples();
-                initParticles();
-                initMdImport();
-                initStylePanel();
-                bindEvents();
-                await loadArticles();
-                await checkLogin();
-                renderList();
-                renderTags();
+                initRipples(); initParticles(); initMdImport(); initStylePanel(); bindEvents();
+                await loadArticles(); await checkLogin(); renderList(); renderTags();
             }
             init();
         })();
