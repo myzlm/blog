@@ -7,7 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+    </script>
     <style>
         :root {
             --bg-deep: #0a0a0f;
@@ -20,7 +21,6 @@
             --vermillion-glow: rgba(197, 59, 59, 0.5);
             --cyan-neon: #00e5ff;
             --cyan-glow: rgba(0, 229, 255, 0.45);
-            --jade: #6b9b7a;
             --text-primary: #e8e0d5;
             --text-secondary: #b8b0a0;
             --text-muted: #7a7265;
@@ -34,8 +34,10 @@
             --radius-lg: 24px;
             --transition-fast: 0.2s ease;
             --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--border-subtle);
+            --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--border-glow), 0 0 20px var(--gold-glow);
+            --shadow-glow-gold: 0 0 15px var(--gold-glow), 0 0 30px rgba(201, 169, 110, 0.2);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; font-size: 16px; }
         body {
@@ -139,7 +141,6 @@
         .btn.primary-btn { background: rgba(180,130,50,0.2); border-color: var(--gold); color: var(--gold-bright); font-weight: bold; }
         .btn.primary-btn:hover { background: rgba(200,150,60,0.3); box-shadow: var(--shadow-glow-gold), 0 0 25px var(--gold-glow); }
         .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; letter-spacing: 0.5px; border-radius: 18px; }
-        .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
         .articles-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
         @media (min-width: 768px) { .articles-grid { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 1.4rem; } }
         .article-card {
@@ -211,7 +212,7 @@
         .modal .close-btn:hover { color: var(--vermillion); }
         .input-group { margin-bottom: 1.1rem; }
         .input-group label { display: block; margin-bottom: 0.35rem; color: var(--text-secondary); font-size: 0.85rem; letter-spacing: 1px; }
-        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 0.65rem 1rem; border: 1px solid rgba(180,150,100,0.35); border-radius: var(--radius-md); background: rgba(15,15,22,0.7); color: var(--text-primary); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: all var(--transition-smooth); letter-spacing: 0.5px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 0.65rem 1rem; border: 1px solid rgba(180,150,100,0.35); border-radius: var(--radius-md); background: rgba(15,15,22,0.7); color: var(--text-primary); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: all var(--transition-smooth); letter-spacing: 0.5px; }
         .input-group input:focus, .input-group textarea:focus { border-color: var(--gold); box-shadow: 0 0 12px var(--gold-glow), 0 0 0 3px rgba(201,169,110,0.06); background: rgba(18,18,28,0.85); }
         .input-group textarea { min-height: 200px; resize: vertical; font-family: var(--font-body); line-height: 1.7; }
         .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
@@ -346,65 +347,66 @@
 
     <script>
         (function() {
-            // API 地址（与导航页共用同一个后端）
             const API_BASE = 'https://myzlm.serveousercontent.com';
 
-            // 工具函数
             const $ = (sel) => document.querySelector(sel);
             const $$ = (sel) => document.querySelectorAll(sel);
 
             function escapeHtml(text) {
                 const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-                return String(text).replace(/[&<>"']/g, m => map[m]);
+                return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
             }
 
-            function showToast(message, type = 'success') {
-                const container = $('#toastContainer');
-                const toast = document.createElement('div');
-                toast.className = `toast toast-${type}`;
+            function showToast(message, type) {
+                type = type || 'success';
+                var container = $('#toastContainer');
+                var toast = document.createElement('div');
+                toast.className = 'toast toast-' + type;
                 toast.textContent = message;
                 container.appendChild(toast);
-                setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
+                setTimeout(function() {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 3000);
             }
 
             function formatDate(dateStr) {
                 if (!dateStr) return '';
-                const d = new Date(dateStr);
-                const year = d.getFullYear();
-                const month = d.getMonth() + 1;
-                const day = d.getDate();
-                const chineseMonths = ['', '元月', '杏月', '桃月', '槐月', '榴月', '荷月', '兰月', '桂月', '菊月', '露月', '葭月', '腊月'];
-                const monthName = chineseMonths[month] || `${month}月`;
-                const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-                const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-                const gzYear = gan[(year - 4) % 10] + zhi[(year - 4) % 12];
-                return `${gzYear}年·${monthName}${day}日`;
+                var d = new Date(dateStr);
+                var year = d.getFullYear();
+                var month = d.getMonth() + 1;
+                var day = d.getDate();
+                var chineseMonths = ['', '元月', '杏月', '桃月', '槐月', '榴月', '荷月', '兰月', '桂月', '菊月', '露月', '葭月', '腊月'];
+                var monthName = chineseMonths[month] || (month + '月');
+                var gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                var zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+                var gzYear = gan[(year - 4) % 10] + zhi[(year - 4) % 12];
+                return gzYear + '年·' + monthName + day + '日';
             }
 
-            // 状态变量
-            let currentUser = null;
-            let articles = [];
-            let currentView = 'list';
-            let pendingDeleteId = null;
+            var currentUser = null;
+            var articles = [];
+            var currentView = 'list';
+            var pendingDeleteId = null;
 
-            // 封装请求
-            async function apiCall(url, options = {}, silent = false) {
-                const config = {
+            async function apiCall(url, options, silent) {
+                options = options || {};
+                silent = silent || false;
+                var config = {
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    ...options,
+                    headers: { 'Content-Type': 'application/json' }
                 };
-                if (config.body && typeof config.body === 'object') {
-                    config.body = JSON.stringify(config.body);
+                if (options.method) config.method = options.method;
+                if (options.body && typeof options.body === 'object') {
+                    config.body = JSON.stringify(options.body);
                 }
                 try {
-                    const res = await fetch(API_BASE + url, config);
+                    var res = await fetch(API_BASE + url, config);
                     if (!res.ok) {
                         if (silent) return null;
-                        const data = await res.json().catch(() => ({}));
-                        throw new Error(data.error || `请求失败 (${res.status})`);
+                        var data = await res.json().catch(function() { return {}; });
+                        throw new Error(data.error || '请求失败 (' + res.status + ')');
                     }
-                    const text = await res.text();
+                    var text = await res.text();
                     if (!text) return null;
                     return JSON.parse(text);
                 } catch (e) {
@@ -413,9 +415,8 @@
                 }
             }
 
-            // 登录状态检查
             async function checkLoginStatus() {
-                const data = await apiCall('/api/me', {}, true);
+                var data = await apiCall('/api/me', {}, true);
                 if (data && data.username) {
                     currentUser = data;
                 } else {
@@ -425,15 +426,15 @@
             }
 
             function updateUIByRole() {
-                const greeting = $('#greetingText');
-                const loginBtn = $('#loginBtn');
-                const logoutBtn = $('#logoutBtn');
-                const adminBtn = $('#adminPanelBtn');
-                const newArticleBtn = $('#newArticleBtn');
+                var greeting = $('#greetingText');
+                var loginBtn = $('#loginBtn');
+                var logoutBtn = $('#logoutBtn');
+                var adminBtn = $('#adminPanelBtn');
+                var newArticleBtn = $('#newArticleBtn');
 
                 if (currentUser) {
-                    const roleIcon = currentUser.role === 'admin' ? '🔰' : '📖';
-                    greeting.textContent = `${roleIcon} ${currentUser.username}`;
+                    var roleIcon = currentUser.role === 'admin' ? '🔰' : '📖';
+                    greeting.textContent = roleIcon + ' ' + currentUser.username;
                     loginBtn.classList.add('hidden');
                     logoutBtn.classList.remove('hidden');
                     if (currentUser.role === 'admin') {
@@ -454,12 +455,11 @@
                 if (currentView === 'admin') renderAdminPanel();
             }
 
-            // 登录
             async function login(username, password) {
-                const data = await apiCall('/api/login', { method: 'POST', body: { username, password } });
+                var data = await apiCall('/api/login', { method: 'POST', body: { username: username, password: password } });
                 currentUser = { username: data.username, role: data.role };
                 updateUIByRole();
-                showToast(`欢迎回来，${data.username}`, 'success');
+                showToast('欢迎回来，' + data.username, 'success');
                 return data;
             }
 
@@ -471,21 +471,19 @@
                 switchView('list');
             }
 
-            // 视图切换
             function switchView(view) {
                 currentView = view;
-                $$('.view').forEach(v => v.classList.remove('active'));
-                const targetView = $('#view' + view.charAt(0).toUpperCase() + view.slice(1));
+                $$('.view').forEach(function(v) { v.classList.remove('active'); });
+                var targetView = $('#view' + view.charAt(0).toUpperCase() + view.slice(1));
                 if (targetView) targetView.classList.add('active');
                 if (view === 'list') renderArticleList();
                 if (view === 'admin') renderAdminPanel();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // 加载文章
             async function loadArticles() {
                 try {
-                    const data = await apiCall('/api/articles');
+                    var data = await apiCall('/api/articles');
                     articles = Array.isArray(data) ? data : [];
                 } catch (e) {
                     articles = [];
@@ -493,39 +491,43 @@
             }
 
             function renderArticleList() {
-                const grid = $('#articlesGrid');
-                const emptyState = $('#emptyState');
+                var grid = $('#articlesGrid');
+                var emptyState = $('#emptyState');
                 if (!articles || articles.length === 0) {
                     grid.innerHTML = '';
                     emptyState.classList.remove('hidden');
                     return;
                 }
                 emptyState.classList.add('hidden');
-                grid.innerHTML = articles.map(article => `
-                <div class="article-card" data-id="${escapeHtml(article.id)}">
-                  <div class="card-header">
-                    <span class="card-title">${escapeHtml(article.title || '无题')}</span>
-                    <span class="card-seal">${escapeHtml(article.seal || '墨')}</span>
-                  </div>
-                  <p class="card-summary">${escapeHtml(article.summary || article.content?.substring(0, 120) || '暂无摘要')}</p>
-                  <div class="card-meta">
-                    <span class="card-date">${formatDate(article.createdAt)}</span>
-                    ${(article.tags || []).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('')}
-                  </div>
-                </div>
-              `).join('');
+                var html = '';
+                for (var i = 0; i < articles.length; i++) {
+                    var article = articles[i];
+                    html += '<div class="article-card" data-id="' + escapeHtml(article.id) + '">';
+                    html += '<div class="card-header">';
+                    html += '<span class="card-title">' + escapeHtml(article.title || '无题') + '</span>';
+                    html += '<span class="card-seal">' + escapeHtml(article.seal || '墨') + '</span>';
+                    html += '</div>';
+                    html += '<p class="card-summary">' + escapeHtml(article.summary || (article.content ? article.content.substring(0, 120) : '暂无摘要')) + '</p>';
+                    html += '<div class="card-meta">';
+                    html += '<span class="card-date">' + formatDate(article.createdAt) + '</span>';
+                    var tags = article.tags || [];
+                    for (var j = 0; j < tags.length; j++) {
+                        html += '<span class="card-tag">' + escapeHtml(tags[j]) + '</span>';
+                    }
+                    html += '</div></div>';
+                }
+                grid.innerHTML = html;
 
-                grid.querySelectorAll('.article-card').forEach(card => {
+                grid.querySelectorAll('.article-card').forEach(function(card) {
                     card.addEventListener('click', function() {
                         window._blogApp.viewArticle(this.dataset.id);
                     });
                 });
             }
 
-            // 文章详情
             async function viewArticle(id) {
                 try {
-                    const article = await apiCall(`/api/articles/${encodeURIComponent(id)}`);
+                    var article = await apiCall('/api/articles/' + encodeURIComponent(id));
                     if (!article) {
                         showToast('文章不存在', 'error');
                         return;
@@ -540,8 +542,8 @@
             }
 
             function renderArticleDetail(article) {
-                const container = $('#articleDetailContent');
-                let contentHtml = '';
+                var container = $('#articleDetailContent');
+                var contentHtml = '';
                 try {
                     if (typeof marked !== 'undefined' && article.content) {
                         contentHtml = marked.parse(article.content);
@@ -552,37 +554,42 @@
                     contentHtml = escapeHtml(article.content || '').replace(/\n/g, '<br>');
                 }
 
-                container.innerHTML = `
-                <div class="detail-header">
-                  <h1 class="detail-title">${escapeHtml(article.title || '无题')}</h1>
-                  <div class="detail-meta">
-                    <span>📅 ${formatDate(article.createdAt)}</span>
-                    ${article.updatedAt && article.updatedAt !== article.createdAt ? `<span>✏️ 更新于 ${formatDate(article.updatedAt)}</span>` : ''}
-                    ${(article.tags || []).map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}
-                    <span style="margin-left:auto;color:var(--vermillion);font-family:var(--font-calligraphy);font-size:1.2rem;">【${escapeHtml(article.seal || '墨')}】</span>
-                  </div>
-                </div>
-                <div class="detail-content">${contentHtml}</div>
-                <div class="detail-actions">
-                  ${currentUser && currentUser.role === 'admin' ? `
-                    <button class="btn btn-sm" onclick="window._blogApp.editArticle('${escapeHtml(article.id)}')">✏️ 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle('${escapeHtml(article.id)}', '${escapeHtml(article.title || '')}')">🗑️ 删除</button>
-                  ` : ''}
-                </div>
-              `;
+                var html = '<div class="detail-header">';
+                html += '<h1 class="detail-title">' + escapeHtml(article.title || '无题') + '</h1>';
+                html += '<div class="detail-meta">';
+                html += '<span>📅 ' + formatDate(article.createdAt) + '</span>';
+                if (article.updatedAt && article.updatedAt !== article.createdAt) {
+                    html += '<span>✏️ 更新于 ' + formatDate(article.updatedAt) + '</span>';
+                }
+                var tags = article.tags || [];
+                for (var i = 0; i < tags.length; i++) {
+                    html += '<span class="detail-tag">' + escapeHtml(tags[i]) + '</span>';
+                }
+                html += '<span style="margin-left:auto;color:var(--vermillion);font-family:var(--font-calligraphy);font-size:1.2rem;">【' + escapeHtml(article.seal || '墨') + '】</span>';
+                html += '</div></div>';
+                html += '<div class="detail-content">' + contentHtml + '</div>';
+                html += '<div class="detail-actions">';
+                if (currentUser && currentUser.role === 'admin') {
+                    html += '<button class="btn btn-sm" onclick="window._blogApp.editArticle(\'' + escapeHtml(article.id) + '\')">✏️ 编辑</button>';
+                    html += '<button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle(\'' + escapeHtml(article.id) + '\', \'' + escapeHtml(article.title || '') + '\')">🗑️ 删除</button>';
+                }
+                html += '</div>';
+                container.innerHTML = html;
                 container.dataset.loaded = 'true';
                 container.dataset.articleId = article.id;
             }
 
-            // 文章编辑
-            async function openArticleEditor(articleId = null) {
-                const modal = $('#articleModal');
-                const titleEl = $('#articleModalTitle');
-                const submitBtn = $('#submitArticle');
+            async function openArticleEditor(articleId) {
+                var modal = $('#articleModal');
+                var titleEl = $('#articleModalTitle');
+                var submitBtn = $('#submitArticle');
                 if (articleId) {
                     try {
-                        const article = await apiCall(`/api/articles/${encodeURIComponent(articleId)}`);
-                        if (!article) { showToast('文章不存在', 'error'); return; }
+                        var article = await apiCall('/api/articles/' + encodeURIComponent(articleId));
+                        if (!article) {
+                            showToast('文章不存在', 'error');
+                            return;
+                        }
                         titleEl.textContent = '✏️ 编辑文章';
                         submitBtn.textContent = '保 存';
                         $('#articleTitle').value = article.title || '';
@@ -609,23 +616,23 @@
             }
 
             async function submitArticle() {
-                const title = $('#articleTitle').value.trim();
-                const content = $('#articleContent').value.trim();
+                var title = $('#articleTitle').value.trim();
+                var content = $('#articleContent').value.trim();
                 if (!title || !content) {
                     showToast('标题和内容不能为空', 'error');
                     return;
                 }
-                const articleData = {
-                    title,
-                    content,
+                var articleData = {
+                    title: title,
+                    content: content,
                     summary: $('#articleSummary').value.trim(),
-                    tags: $('#articleTags').value.split(',').map(t => t.trim()).filter(Boolean),
-                    seal: $('#articleSeal').value.trim() || '墨',
+                    tags: $('#articleTags').value.split(',').map(function(t) { return t.trim(); }).filter(Boolean),
+                    seal: $('#articleSeal').value.trim() || '墨'
                 };
-                const editId = $('#articleEditId').value;
+                var editId = $('#articleEditId').value;
                 try {
                     if (editId) {
-                        await apiCall(`/api/articles/${encodeURIComponent(editId)}`, { method: 'PUT', body: articleData });
+                        await apiCall('/api/articles/' + encodeURIComponent(editId), { method: 'PUT', body: articleData });
                         showToast('文章已更新', 'success');
                     } else {
                         await apiCall('/api/articles', { method: 'POST', body: articleData });
@@ -635,7 +642,7 @@
                     await loadArticles();
                     if (currentView === 'list') renderArticleList();
                     if (currentView === 'admin') renderAdminPanel();
-                    const detailContainer = $('#articleDetailContent');
+                    var detailContainer = $('#articleDetailContent');
                     if (detailContainer.dataset.loaded === 'true' && detailContainer.dataset.articleId === editId) {
                         await viewArticle(editId);
                     }
@@ -647,13 +654,13 @@
             function confirmDeleteArticle(id, title) {
                 pendingDeleteId = id;
                 $('#confirmModal').classList.add('active');
-                $('#confirmModal').querySelector('p').textContent = `此操作不可恢复，确定要删除「${title || '这篇文章'}」吗？`;
+                $('#confirmModal').querySelector('p').textContent = '此操作不可恢复，确定要删除「' + (title || '这篇文章') + '」吗？';
             }
 
             async function executeDelete() {
                 if (!pendingDeleteId) return;
                 try {
-                    await apiCall(`/api/articles/${encodeURIComponent(pendingDeleteId)}`, { method: 'DELETE' });
+                    await apiCall('/api/articles/' + encodeURIComponent(pendingDeleteId), { method: 'DELETE' });
                     showToast('文章已删除', 'success');
                     $('#confirmModal').classList.remove('active');
                     pendingDeleteId = null;
@@ -668,73 +675,92 @@
                 }
             }
 
-            // 管理面板
             async function renderAdminPanel() {
-                const container = $('#adminArticlesList');
+                var container = $('#adminArticlesList');
                 if (!articles || articles.length === 0) {
                     container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;">暂无文章，点击上方按钮撰写第一篇</p>';
                     return;
                 }
-                container.innerHTML = articles.map(a => `
-                <div class="article-manage-item">
-                  <div class="item-info">
-                    <span class="item-title">${escapeHtml(a.title || '无题')}</span>
-                    <span class="item-date">${formatDate(a.createdAt)}</span>
-                  </div>
-                  <div class="item-actions">
-                    <button class="btn btn-sm" onclick="window._blogApp.editArticle('${escapeHtml(a.id)}')">✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle('${escapeHtml(a.id)}', '${escapeHtml(a.title || '')}')">🗑️</button>
-                  </div>
-                </div>
-              `).join('');
+                var html = '';
+                for (var i = 0; i < articles.length; i++) {
+                    var a = articles[i];
+                    html += '<div class="article-manage-item">';
+                    html += '<div class="item-info">';
+                    html += '<span class="item-title">' + escapeHtml(a.title || '无题') + '</span>';
+                    html += '<span class="item-date">' + formatDate(a.createdAt) + '</span>';
+                    html += '</div>';
+                    html += '<div class="item-actions">';
+                    html += '<button class="btn btn-sm" onclick="window._blogApp.editArticle(\'' + escapeHtml(a.id) + '\')">✏️</button>';
+                    html += '<button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle(\'' + escapeHtml(a.id) + '\', \'' + escapeHtml(a.title || '') + '\')">🗑️</button>';
+                    html += '</div></div>';
+                }
+                container.innerHTML = html;
             }
 
-            // 粒子特效 (简单保留)
             function initParticles() {
-                const canvas = $('#particleCanvas');
-                const ctx = canvas.getContext('2d');
-                let w, h;
-                const particles = [];
-                function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
+                var canvas = $('#particleCanvas');
+                var ctx = canvas.getContext('2d');
+                var w, h;
+                var particles = [];
+                function resize() {
+                    w = window.innerWidth;
+                    h = window.innerHeight;
+                    canvas.width = w;
+                    canvas.height = h;
+                }
                 window.addEventListener('resize', resize);
                 resize();
-                class Particle {
-                    constructor() { this.reset(true); }
-                    reset(init) {
-                        this.x = Math.random() * w;
-                        this.y = init ? Math.random() * h : -10;
-                        this.size = 0.8 + Math.random() * 2;
-                        this.speed = 0.3 + Math.random() * 1;
-                        this.opacity = 0.3 + Math.random() * 0.5;
-                        this.isGold = Math.random() > 0.5;
-                        this.color = this.isGold ? 'rgba(200,165,100,' + this.opacity + ')' : 'rgba(0,220,240,' + this.opacity + ')';
-                    }
-                    update() { this.y += this.speed; if (this.y > h + 10) this.reset(false); }
-                    draw(ctx) {
-                        ctx.globalAlpha = this.opacity;
-                        ctx.fillStyle = this.color;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
+                function Particle() {
+                    this.reset(true);
                 }
-                for (let i = 0; i < 50; i++) particles.push(new Particle());
+                Particle.prototype.reset = function(init) {
+                    this.x = Math.random() * w;
+                    this.y = init ? Math.random() * h : -10;
+                    this.size = 0.8 + Math.random() * 2;
+                    this.speed = 0.3 + Math.random() * 1;
+                    this.opacity = 0.3 + Math.random() * 0.5;
+                    this.isGold = Math.random() > 0.5;
+                    this.color = this.isGold ? 'rgba(200,165,100,' + this.opacity + ')' : 'rgba(0,220,240,' + this.opacity + ')';
+                };
+                Particle.prototype.update = function() {
+                    this.y += this.speed;
+                    if (this.y > h + 10) this.reset(false);
+                };
+                Particle.prototype.draw = function(ctx) {
+                    ctx.globalAlpha = this.opacity;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                };
+                for (var i = 0; i < 50; i++) {
+                    particles.push(new Particle());
+                }
                 function animate() {
                     ctx.clearRect(0, 0, w, h);
-                    particles.forEach(p => { p.update(); p.draw(ctx); });
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].update();
+                        particles[i].draw(ctx);
+                    }
                     requestAnimationFrame(animate);
                 }
                 animate();
             }
 
-            // 事件绑定
             function bindEvents() {
-                $('#loginBtn').addEventListener('click', () => $('#loginModal').classList.add('active'));
-                $('#closeLoginModal').addEventListener('click', () => $('#loginModal').classList.remove('active'));
-                $('#submitLogin').addEventListener('click', async () => {
-                    const u = $('#loginUsername').value.trim();
-                    const p = $('#loginPassword').value;
-                    if (!u || !p) return showToast('请输入账号和密码', 'error');
+                $('#loginBtn').addEventListener('click', function() {
+                    $('#loginModal').classList.add('active');
+                });
+                $('#closeLoginModal').addEventListener('click', function() {
+                    $('#loginModal').classList.remove('active');
+                });
+                $('#submitLogin').addEventListener('click', async function() {
+                    var u = $('#loginUsername').value.trim();
+                    var p = $('#loginPassword').value;
+                    if (!u || !p) {
+                        showToast('请输入账号和密码', 'error');
+                        return;
+                    }
                     try {
                         await login(u, p);
                         $('#loginModal').classList.remove('active');
@@ -742,28 +768,48 @@
                         $('#loginPassword').value = '';
                         await loadArticles();
                         renderArticleList();
-                    } catch (err) { showToast('登录失败: ' + err.message, 'error'); }
+                    } catch (err) {
+                        showToast('登录失败: ' + err.message, 'error');
+                    }
                 });
                 $('#logoutBtn').addEventListener('click', logout);
-                $('#adminPanelBtn').addEventListener('click', () => switchView('admin'));
-                $('#backFromAdminBtn').addEventListener('click', () => switchView('list'));
-                $('#newArticleBtn').addEventListener('click', () => openArticleEditor(null));
-                $('#adminNewArticleBtn').addEventListener('click', () => openArticleEditor(null));
-                $('#closeArticleModal').addEventListener('click', () => $('#articleModal').classList.remove('active'));
-                $('#cancelArticle').addEventListener('click', () => $('#articleModal').classList.remove('active'));
+                $('#adminPanelBtn').addEventListener('click', function() {
+                    switchView('admin');
+                });
+                $('#backFromAdminBtn').addEventListener('click', function() {
+                    switchView('list');
+                });
+                $('#newArticleBtn').addEventListener('click', function() {
+                    openArticleEditor(null);
+                });
+                $('#adminNewArticleBtn').addEventListener('click', function() {
+                    openArticleEditor(null);
+                });
+                $('#closeArticleModal').addEventListener('click', function() {
+                    $('#articleModal').classList.remove('active');
+                });
+                $('#cancelArticle').addEventListener('click', function() {
+                    $('#articleModal').classList.remove('active');
+                });
                 $('#submitArticle').addEventListener('click', submitArticle);
-                $('#backToListBtn').addEventListener('click', () => switchView('list'));
+                $('#backToListBtn').addEventListener('click', function() {
+                    switchView('list');
+                });
                 $('#confirmDeleteBtn').addEventListener('click', executeDelete);
-                $('#cancelDeleteBtn').addEventListener('click', () => {
+                $('#cancelDeleteBtn').addEventListener('click', function() {
                     $('#confirmModal').classList.remove('active');
                     pendingDeleteId = null;
                 });
-                $$('.modal-overlay').forEach(ov => {
-                    ov.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+                $$('.modal-overlay').forEach(function(ov) {
+                    ov.addEventListener('click', function(e) {
+                        if (e.target === this) this.classList.remove('active');
+                    });
                 });
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
-                        $$('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+                        $$('.modal-overlay.active').forEach(function(m) {
+                            m.classList.remove('active');
+                        });
                         pendingDeleteId = null;
                     }
                 });
@@ -772,21 +818,21 @@
                 });
             }
 
-            // 暴露全局接口
             window._blogApp = {
-                viewArticle,
+                viewArticle: viewArticle,
                 editArticle: openArticleEditor,
-                confirmDeleteArticle,
-                switchView,
+                confirmDeleteArticle: confirmDeleteArticle,
+                switchView: switchView
             };
 
-            // 初始化
             async function init() {
                 initParticles();
                 bindEvents();
                 await loadArticles();
                 await checkLoginStatus();
-                renderArticleList);
+                renderArticleList();
+                console.log('🖌️  墨韵·云笺 博客已就绪 | API: ' + API_BASE);
+                console.log('👤 默认账号: zlm / zlm20130503');
             }
 
             init();
