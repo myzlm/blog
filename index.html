@@ -21,6 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 
     <style>
+        /* ===== 全局变量（原版皮肤） ===== */
         :root {
             --bg-deep: #12121f;
             --bg-card: rgba(30, 30, 50, 0.9);
@@ -45,6 +46,73 @@
             --transition-fast: 0.2s ease;
             --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
+
+        /* ===== 竹简皮肤 ===== */
+        .skin-bamboo {
+            --bg-deep: #2d2416;
+            --bg-card: rgba(45, 36, 22, 0.92);
+            --gold: #c8a96e;
+            --gold-bright: #e8d5a3;
+            --gold-glow: rgba(200, 169, 110, 0.6);
+            --vermillion: #c5533b;
+            --vermillion-glow: rgba(197, 83, 59, 0.6);
+            --cyan-neon: #5ce6ff;
+            --cyan-glow: rgba(92, 230, 255, 0.5);
+            --text-primary: #f0e6d2;
+            --text-secondary: #c8b898;
+            --text-muted: #9b8a70;
+            --border-subtle: rgba(200, 169, 110, 0.3);
+            --border-glow: rgba(200, 169, 110, 0.6);
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 25px, rgba(139, 115, 85, 0.1) 25px, rgba(139, 115, 85, 0.1) 26px);
+        }
+        .skin-bamboo .main-container {
+            border-left: 10px solid #5c3e22;
+            border-right: 2px solid #3d2b14;
+            box-shadow: 20px 0 40px rgba(0,0,0,0.6), -5px 0 15px rgba(0,0,0,0.4);
+            padding-left: 2rem;
+        }
+        .skin-bamboo .article-card {
+            border-radius: 4px;
+            border-left: 4px solid var(--gold);
+        }
+
+        /* ===== 传国玉玺皮肤 ===== */
+        .skin-jade {
+            --bg-deep: #1a2a1a;
+            --bg-card: rgba(20, 40, 20, 0.9);
+            --gold: #e0c080;
+            --gold-bright: #ffe9b0;
+            --gold-glow: rgba(224, 192, 128, 0.8);
+            --vermillion: #d94a4a;
+            --vermillion-glow: rgba(217, 74, 74, 0.7);
+            --cyan-neon: #6ee6ff;
+            --cyan-glow: rgba(110, 230, 255, 0.6);
+            --text-primary: #e8f0e0;
+            --text-secondary: #c0d0b8;
+            --text-muted: #90a080;
+            --border-subtle: rgba(224, 192, 128, 0.4);
+            --border-glow: rgba(224, 192, 128, 0.8);
+        }
+        .skin-jade .main-container::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px; height: 150px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="80" text-anchor="middle" fill="%23e0c080" opacity="0.15">⚜</text></svg>') no-repeat center;
+            background-size: contain;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .skin-jade .article-card {
+            border: 2px solid rgba(224, 192, 128, 0.5);
+            box-shadow: 0 0 20px rgba(224, 192, 128, 0.3);
+        }
+        .skin-jade .article-card:hover {
+            box-shadow: 0 0 35px rgba(224, 192, 128, 0.6);
+        }
+
+        /* ===== 全局样式 ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; font-size: 16px; }
         body {
@@ -157,10 +225,10 @@
         }
         .tag-chip.active, .tag-chip:hover { background: rgba(250,219,95,0.3); border-color: var(--gold); color: #fff; }
 
-        .articles-grid { display: grid; grid-template-columns: 1fr; gap: 1.3rem; }
+        .articles-grid { display: grid; grid-template-columns: var(--layout-columns, repeat(auto-fill, minmax(420px, 1fr))); gap: 1.3rem; }
         @media (min-width: 768px) { .articles-grid { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); } }
         .article-card {
-            background: rgba(35, 35, 55, 0.85); backdrop-filter: blur(18px);
+            background: var(--bg-card); backdrop-filter: blur(18px);
             border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
             padding: 1.4rem 1.5rem; cursor: pointer;
             transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -199,7 +267,7 @@
         @keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
         .article-detail {
-            background: rgba(35, 35, 55, 0.9); backdrop-filter: blur(14px);
+            background: var(--bg-card); backdrop-filter: blur(14px);
             border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
             padding: 1.8rem; box-shadow: 0 0 30px rgba(0,0,0,0.5);
             animation: scrollUnfold 0.8s ease-out;
@@ -227,7 +295,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 200; visibility: hidden; opacity: 0; transition: opacity 0.35s ease, visibility 0.35s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal {
-            background: rgba(35, 35, 55, 0.95); backdrop-filter: blur(18px);
+            background: var(--bg-card); backdrop-filter: blur(18px);
             border-radius: var(--radius-lg); padding: 2rem;
             width: 92%; max-width: 520px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px var(--border-subtle), 0 0 40px var(--gold-glow);
@@ -246,7 +314,7 @@
         .input-group textarea { min-height: 200px; resize: vertical; font-family: var(--font-mono); line-height: 1.7; }
         .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
 
-        .admin-panel { background: rgba(35, 35, 55, 0.9); backdrop-filter: blur(14px); border: 1px solid rgba(255,107,107,0.4); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: 0 0 25px rgba(255,107,107,0.15), 0 4px 20px rgba(0,0,0,0.4); }
+        .admin-panel { background: var(--bg-card); backdrop-filter: blur(14px); border: 1px solid rgba(255,107,107,0.4); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: 0 0 25px rgba(255,107,107,0.15), 0 4px 20px rgba(0,0,0,0.4); }
         .admin-panel h3 { font-family: var(--font-calligraphy); font-size: 1.5rem; color: #f0a0a0; letter-spacing: 2px; margin-bottom: 1rem; text-shadow: 0 0 10px var(--vermillion-glow); }
         .admin-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.2rem; }
         .article-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px dashed rgba(250,219,95,0.25); flex-wrap: wrap; gap: 0.5rem; }
@@ -267,15 +335,70 @@
         .view.active { display: block; }
         .quota-tip { font-size: 0.8rem; color: var(--cyan-neon); margin-left: 0.5rem; }
         .quota-info { text-align: center; color: var(--cyan-neon); margin-bottom: 1rem; font-size: 0.9rem; }
+
+        /* ===== 布局：竖向（单列） ===== */
+        .layout-vertical .articles-grid {
+            grid-template-columns: 1fr !important;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* 横向布局默认 */
+
+        /* ===== 样式选择器面板 ===== */
+        .style-panel {
+            position: fixed;
+            top: 20px; right: 20px;
+            z-index: 60;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            padding: 6px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+        .style-panel .btn {
+            padding: 0.3rem 0.7rem;
+            font-size: 0.75rem;
+            border-radius: 14px;
+            letter-spacing: 0.5px;
+            background: rgba(20,18,28,0.7);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .style-panel .btn.active {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--gold);
+            font-weight: bold;
+        }
+        .style-panel .btn:hover {
+            background: rgba(250,219,95,0.3);
+            color: #fff;
+        }
     </style>
 </head>
-<body>
+<body class="layout-horizontal">
+
     <div class="scanlines"></div>
     <canvas id="particleCanvas"></canvas>
     <canvas id="rippleCanvas"></canvas>
     <div class="poem-float" id="poemFloat">☯ 且将新火试新茶，诗酒趁年华 ☯</div>
     <div id="toastContainer"></div>
-    <div id="backToTop">⬆</div>
+    <div id="backToTop" title="返回顶部">⬆</div>
+
+    <!-- 样式选择器 -->
+    <div class="style-panel" id="stylePanel">
+        <button class="btn skin-btn active" data-skin="">原版</button>
+        <button class="btn skin-btn" data-skin="bamboo">竹简</button>
+        <button class="btn skin-btn" data-skin="jade">传国玉玺</button>
+        <span style="color:var(--text-muted);margin:0 4px;">|</span>
+        <button class="btn layout-btn active" data-layout="horizontal">横排</button>
+        <button class="btn layout-btn" data-layout="vertical">竖排</button>
+    </div>
 
     <div class="main-container">
         <header class="header">
@@ -561,7 +684,6 @@
                 catch(e) { showToast('加载失败: ' + e.message, 'error'); }
             }
 
-            // ---- 增强的文章渲染（支持 KaTeX + Mermaid + 代码高亮） ----
             function renderDetail(a) {
                 var container = $('#articleDetailContent');
                 var rawContent = a.content || '';
@@ -577,7 +699,6 @@
                 }
                 container.innerHTML = '<div class="detail-header"><h1 class="detail-title">' + escapeHtml(a.title) + '</h1><div class="detail-meta"><span>📅 ' + formatDate(a.createdAt) + '</span>' + (a.updatedAt&&a.updatedAt!==a.createdAt?'<span>✏️ 更新于 ' + formatDate(a.updatedAt) + '</span>':'') + ((a.tags||[]).map(function(t){return '<span class="detail-tag">' + escapeHtml(t) + '</span>';}).join('')) + '<span class="author-badge" style="margin-left:auto;">' + escapeHtml(a.author||'佚名') + '</span></div></div><div class="detail-content">' + contentHtml + '</div><div class="detail-actions"></div>';
 
-                // 渲染 KaTeX
                 try {
                     if (typeof renderMathInElement === 'function' && typeof katex !== 'undefined') {
                         renderMathInElement(container, {
@@ -588,21 +709,15 @@
                                 { left: '\\[', right: '\\]', display: true }
                             ],
                             throwOnError: false,
-                            errorCallback: function(msg, err) {
-                                console.warn('KaTeX error:', msg, err);
-                                return '<span class="katex-error">公式渲染错误</span>';
-                            }
+                            errorCallback: function(msg, err) { console.warn('KaTeX error:', msg, err); return '<span class="katex-error">公式渲染错误</span>'; }
                         });
                     }
                 } catch(e) { console.warn('KaTeX 渲染异常:', e); }
 
-                // 渲染 Mermaid
                 try {
                     var mermaidNodes = container.querySelectorAll('.mermaid');
                     if (mermaidNodes.length > 0 && typeof mermaid !== 'undefined') {
-                        mermaid.run({ nodes: mermaidNodes, suppressErrors: true }).catch(function(err) {
-                            console.warn('Mermaid 渲染错误:', err);
-                        });
+                        mermaid.run({ nodes: mermaidNodes, suppressErrors: true }).catch(function(err) { console.warn('Mermaid 渲染错误:', err); });
                     }
                 } catch(e) { console.warn('Mermaid 渲染异常:', e); }
 
@@ -792,6 +907,37 @@
             var poemIdx = 0;
             setInterval(function(){ poemIdx = (poemIdx+1)%poems.length; var el = document.getElementById('poemFloat'); if(el) el.textContent = poems[poemIdx]; }, 10000);
 
+            // ========== 皮肤与布局切换 ==========
+            function applySkin(skin) {
+                document.body.classList.remove('skin-bamboo', 'skin-jade');
+                if (skin) document.body.classList.add('skin-' + skin);
+                localStorage.setItem('blog_skin', skin);
+                document.querySelectorAll('.skin-btn').forEach(function(btn) {
+                    btn.classList.toggle('active', btn.dataset.skin === skin);
+                });
+            }
+            function applyLayout(layout) {
+                document.body.classList.remove('layout-horizontal', 'layout-vertical');
+                document.body.classList.add('layout-' + layout);
+                localStorage.setItem('blog_layout', layout);
+                document.querySelectorAll('.layout-btn').forEach(function(btn) {
+                    btn.classList.toggle('active', btn.dataset.layout === layout);
+                });
+            }
+            function initStylePanel() {
+                var savedSkin = localStorage.getItem('blog_skin') || '';
+                var savedLayout = localStorage.getItem('blog_layout') || 'horizontal';
+                if (savedSkin) applySkin(savedSkin);
+                applyLayout(savedLayout);
+                document.getElementById('stylePanel').addEventListener('click', function(e) {
+                    if (e.target.classList.contains('skin-btn')) {
+                        applySkin(e.target.dataset.skin || '');
+                    } else if (e.target.classList.contains('layout-btn')) {
+                        applyLayout(e.target.dataset.layout);
+                    }
+                });
+            }
+
             function bindEvents() {
                 $('#loginBtn').addEventListener('click', function(){ $('#loginModal').classList.add('active'); });
                 $('#closeLoginModal').addEventListener('click', function(){ $('#loginModal').classList.remove('active'); });
@@ -853,6 +999,7 @@
                 initRipples();
                 initParticles();
                 initMdImport();
+                initStylePanel();
                 bindEvents();
                 await loadArticles();
                 await checkLogin();
