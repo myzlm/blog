@@ -10,28 +10,28 @@
         !function(e,t){if("object"==typeof exports&&"undefined"!=typeof module)t(exports);else if("function"==typeof define&&define.amd)define(["exports"],t);else {var n=e.marked=e.marked||{};t(n)}}(this,function(e){"use strict";function t(e){var t=e.match(/^(\s*)([^\s#].*?)(\s*)$/);return t?{raw:e,text:t[2].trim()}:null}function n(e){var t=e.match(/^(\s*)(#{1,6})\s*(.+?)(\s*#*)?$/);return t?{raw:e,depth:t[2].length,text:t[3].trim()}:null}function r(e){var t=e.match(/^(\s*)([*-])\s+(.+)$/);return t?{raw:e,text:t[3].trim()}:null}function i(e){var t=e.match(/^(\s*)(\d+)\.\s+(.+)$/);return t?{raw:e,number:parseInt(t[2]),text:t[3].trim()}:null}function o(e){var t=e.match(/^(\s*)>\s?(.+)/);return t?{raw:e,text:t[2].trim()}:null}function s(e){var t=e.match(/^(\s*)(`{3,}|~{3,})\s*(\S+)?\s*$/);return t?{raw:e,lang:t[3]||"",type:"code"}:null}function a(e){var t=e.match(/^(\s*)(`{1,2})([^`]+)\2/);return t?{raw:e,text:t[3].trim()}:null}function l(e){var t=e.match(/^!\[([^\]]*)\]\(([^)]+)\)/);return t?{raw:e,alt:t[1],href:t[2]}:null}function c(e){var t=e.match(/^\[([^\]]+)\]\(([^)]+)\)/);return t?{raw:e,text:t[1],href:t[2]}:null}function h(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function u(e){var n="";for(var r=0;r<e.length;r++){var i=e[r],o=i.raw;if(i.type==="heading"){var s=i.depth;n+="<h"+s+">"+h(i.text)+"</h"+s+">"}else if(i.type==="paragraph")n+="<p>"+h(i.text)+"</p>";else if(i.type==="list"){n+="<ul>";for(var a=0;a<i.items.length;a++)n+="<li>"+h(i.items[a])+"</li>";n+="</ul>"}else if(i.type==="ordered_list"){n+="<ol>";for(var l=0;l<i.items.length;l++)n+="<li>"+h(i.items[l])+"</li>";n+="</ol>"}else if(i.type==="blockquote")n+="<blockquote>"+h(i.text)+"</blockquote>";else if(i.type==="code")n+="<pre><code>"+h(i.text)+"</code></pre>";else if(i.type==="hr")n+="<hr>";else if(i.type==="image")n+='<img src="'+h(i.href)+'" alt="'+h(i.alt)+'">';else if(i.type==="link")n+='<a href="'+h(i.href)+'">'+h(i.text)+"</a>";else if(i.type==="inline_code")n+="<code>"+h(i.text)+"</code>"}return n}function p(e){var n=[],r="",i="",o=null;for(var s=0;s<e.length;s++){var a=e[s];if(a.trim()===""){if(o&&o.type==="paragraph"){o.text=r;o=null}r="";continue}if(!o){if(a.startsWith("#")){var l=n(a);if(l){o=l;n.push(o);continue}}if(a.startsWith(">")){var c=o(a);if(c){o=c;n.push(o);continue}}if(a.startsWith("```")||a.startsWith("~~~")){var h=s(a);if(h){o={type:"code",text:"",lang:h.lang};n.push(o);s++;while(s<e.length&&!e[s].startsWith("```")&&!e[s].startsWith("~~~")){o.text+=e[s]+"\n";s++}continue}}var u=r(a);if(u){o={type:"list",items:[u.text]};n.push(o);continue}var p=i(a);if(p){o={type:"ordered_list",items:[p.text],start:p.number};n.push(o);continue}var d=l(a);if(d){o={type:"image",alt:d.alt,href:d.href};n.push(o);continue}var f=c(a);if(f){o={type:"link",text:f.text,href:f.href};n.push(o);continue}if(/^(\*{3,}|-{3,}|_{3,})$/.test(a)){o={type:"hr"};n.push(o);continue}o={type:"paragraph",text:a}}else if(o.type==="paragraph")o.text+="\n"+a;else if(o.type==="list"){var g=r(a);if(g)o.items.push(g.text);else{o.text+="\n"+a}}else if(o.type==="ordered_list"){var m=i(a);if(m)o.items.push(m.text);else o.text+="\n"+a}}if(o&&o.type==="paragraph")o.text=r;return n}function d(e){var t=[];for(var n=0;n<e.length;n++){var r=e[n];if(r.startsWith("```")){var i=s(r);if(i){var o="",a=n+1;while(a<e.length&&!e[a].startsWith("```")){o+=e[a]+"\n";a++}t.push({type:"code",lang:i.lang,text:o});n=a;continue}}if(r.startsWith("#")){var l=n(r);if(l){t.push(l);continue}}if(r.startsWith(">")){var c=o(r);if(c){t.push(c);continue}}var h=r;t.push({type:"paragraph",text:h})}return t}function f(e){var t=[];for(var n=0;n<e.length;n++){var r=e[n];var i="";if(r.startsWith("- ")||r.startsWith("* ")){var o=r(a);if(o){var s=[o.text];n++;while(n<e.length&&(e[n].startsWith("- ")||e[n].startsWith("* "))){var l=r(e[n]);if(l)s.push(l.text);n++}t.push({type:"list",items:s});n--;continue}}if(/^\d+\.\s/.test(r)){var c=i(r);if(c){var h=[c.text];n++;while(n<e.length&&/^\d+\.\s/.test(e[n])){var u=i(e[n]);if(u)h.push(u.text);n++}t.push({type:"ordered_list",items:h,start:c.number});n--;continue}}if(r.match(/^!\[/)){var p=l(r);if(p){t.push(p);continue}}if(r.match(/^\[/)){var d=c(r);if(d){t.push(d);continue}}if(r.match(/`[^`]+`/)){var f=a(r);if(f){t.push({type:"inline_code",text:f.text});continue}}if(/^(\*{3,}|-{3,}|_{3,})$/.test(r)){t.push({type:"hr"});continue}t.push({type:"paragraph",text:r})}return t}function g(e){var t=e.split("\n");return u(f(t))}e.parse=g;e.lexer=f;e.parser=u;e.Renderer=function(){};e.Renderer.prototype.code=function(e,t){return"<pre><code>"+h(e)+"</code></pre>"};e.Renderer.prototype.blockquote=function(e){return"<blockquote>"+e+"</blockquote>"};e.Renderer.prototype.html=function(e){return e};e.Renderer.prototype.heading=function(e,t,n){return"<h"+t+">"+e+"</h"+t+">"};e.Renderer.prototype.hr=function(){return"<hr>"};e.Renderer.prototype.list=function(e,t){var n=t?"ol":"ul";return"<"+n+">"+e+"</"+n+">"};e.Renderer.prototype.listitem=function(e){return"<li>"+e+"</li>"};e.Renderer.prototype.paragraph=function(e){return"<p>"+e+"</p>"};e.Renderer.prototype.table=function(e,t){return"<table>"+t+e+"</table>"};e.Renderer.prototype.tablerow=function(e){return"<tr>"+e+"</tr>"};e.Renderer.prototype.tablecell=function(e,t){var n=t.header?"th":"td";return"<"+n+">"+e+"</"+n+">"};e.Renderer.prototype.strong=function(e){return"<strong>"+e+"</strong>"};e.Renderer.prototype.em=function(e){return"<em>"+e+"</em>"};e.Renderer.prototype.codespan=function(e){return"<code>"+e+"</code>"};e.Renderer.prototype.br=function(){return"<br>"};e.Renderer.prototype.del=function(e){return"<del>"+e+"</del>"};e.Renderer.prototype.link=function(e,t,n){return'<a href="'+t+'">'+e+"</a>"};e.Renderer.prototype.image=function(e,t,n){return'<img src="'+t+'" alt="'+e+'">'};e.Renderer.prototype.text=function(e){return e};e.setOptions=function(){}});
     </script>
     <style>
-        /* 明亮古风科技主题 - 完整版 */
         :root {
             --bg-deep: #12121f;
             --bg-card: rgba(30, 30, 50, 0.9);
-            --gold: #f0d48a;
-            --gold-bright: #ffe9b0;
-            --gold-glow: rgba(240, 212, 138, 0.6);
-            --vermillion: #e6554a;
-            --vermillion-glow: rgba(230, 85, 74, 0.6);
-            --cyan-neon: #5ce6ff;
-            --cyan-glow: rgba(92, 230, 255, 0.6);
-            --text-primary: #f2ecdc;
-            --text-secondary: #d4cbb8;
-            --text-muted: #a09880;
-            --border-subtle: rgba(240, 212, 138, 0.3);
-            --border-glow: rgba(240, 212, 138, 0.6);
+            --gold: #fadb5f;
+            --gold-bright: #fff3b0;
+            --gold-glow: rgba(250, 219, 95, 0.7);
+            --vermillion: #ff6b6b;
+            --vermillion-glow: rgba(255, 107, 107, 0.7);
+            --cyan-neon: #7df9ff;
+            --cyan-glow: rgba(125, 249, 255, 0.7);
+            --text-primary: #faf5e6;
+            --text-secondary: #e6dbbd;
+            --text-muted: #b8a88a;
+            --border-subtle: rgba(250, 219, 95, 0.35);
+            --border-glow: rgba(250, 219, 95, 0.7);
             --font-calligraphy: 'ZCOOL QingKe HuangYou', 'Ma Shan Zheng', 'STXingkai', '华文行楷', 'KaiTi', '楷体', serif;
             --font-body: 'ZCOOL XiaoWei', 'Noto Serif SC', 'STSong', '宋体', 'KaiTi', serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
             --radius-sm: 8px;
             --radius-md: 16px;
             --radius-lg: 24px;
+            --transition-fast: 0.2s ease;
             --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,16 +45,16 @@
             position: relative;
             line-height: 1.7;
             letter-spacing: 0.02em;
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%23f0d48a" stroke-width="1.5" opacity="0.8"/><circle cx="12" cy="12" r="5" fill="%23f0d48a" opacity="0.4"/></svg>') 12 12, auto;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%23fadb5f" stroke-width="1.5" opacity="0.8"/><circle cx="12" cy="12" r="5" fill="%23fadb5f" opacity="0.4"/></svg>') 12 12, auto;
         }
         body::before {
             content: '';
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 0;
             background:
-                radial-gradient(ellipse at 20% 30%, rgba(240, 212, 138, 0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 50%, rgba(92, 230, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 40% 80%, rgba(240, 180, 120, 0.05) 0%, transparent 55%);
+                radial-gradient(ellipse at 20% 30%, rgba(250, 219, 95, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(125, 249, 255, 0.07) 0%, transparent 50%),
+                radial-gradient(ellipse at 40% 80%, rgba(255, 107, 107, 0.06) 0%, transparent 55%);
             background-size: 200% 200%;
             animation: inkFlow 25s ease-in-out infinite alternate;
         }
@@ -64,17 +64,18 @@
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.02) 3px, rgba(255,255,255,0.02) 6px);
-            opacity: 0.5;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.03) 3px, rgba(255,255,255,0.03) 6px);
+            opacity: 0.6;
         }
         .poem-float {
-            position: fixed; bottom: 20px; left: 20px; z-index: 30;
-            font-family: var(--font-calligraphy); font-size: 1.2rem;
-            color: var(--gold); opacity: 0.8; letter-spacing: 4px;
-            text-shadow: 0 0 10px var(--gold-glow); pointer-events: none;
-            animation: poemFade 8s ease-in-out infinite;
+            position: fixed; bottom: 25px; left: 25px; z-index: 30;
+            font-family: var(--font-calligraphy); font-size: 1.3rem;
+            color: var(--gold-bright); opacity: 0.9; letter-spacing: 4px;
+            text-shadow: 0 0 15px var(--gold-glow), 0 0 5px #fff;
+            pointer-events: none;
+            animation: poemFade 6s ease-in-out infinite;
         }
-        @keyframes poemFade { 0%,100% { opacity: 0.5; transform: translateY(0); } 50% { opacity: 0.9; transform: translateY(-5px); } }
+        @keyframes poemFade { 0%,100% { opacity: 0.7; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-5px); } }
         .main-container {
             position: relative; z-index: 2;
             width: 100%; max-width: 1000px; margin: 0 auto;
@@ -106,27 +107,27 @@
         .plaque-title {
             font-family: var(--font-calligraphy); font-size: clamp(2rem, 4vw, 3rem);
             color: #ffe9b0; letter-spacing: 6px;
-            text-shadow: 0 0 15px rgba(240,212,138,0.8), 0 0 30px rgba(200,160,80,0.6);
+            text-shadow: 0 0 15px rgba(250,219,95,0.9), 0 0 30px rgba(200,160,80,0.6);
             animation: textShine 4s ease-in-out infinite alternate;
         }
-        @keyframes textShine { 0% { text-shadow: 0 0 10px rgba(240,212,138,0.7); } 100% { text-shadow: 0 0 25px rgba(255,233,176,1); } }
+        @keyframes textShine { 0% { text-shadow: 0 0 12px rgba(250,219,95,0.8); } 100% { text-shadow: 0 0 28px rgba(255,233,176,1); } }
         .subtitle { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-muted); letter-spacing: 2px; text-shadow: 0 0 8px var(--cyan-glow); }
         .user-area { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; margin-top: 0.3rem; }
-        .greeting { font-size: 0.9rem; color: var(--text-secondary); background: rgba(255,250,240,0.08); padding: 0.3rem 0.9rem; border-radius: 20px; border: 1px solid rgba(240,212,138,0.4); }
+        .greeting { font-size: 0.9rem; color: var(--text-secondary); background: rgba(255,250,240,0.08); padding: 0.3rem 0.9rem; border-radius: 20px; border: 1px solid rgba(250,219,95,0.4); }
         .btn {
             font-family: var(--font-body); background: rgba(30,28,38,0.8); backdrop-filter: blur(10px);
-            border: 1px solid rgba(240,212,138,0.5); color: var(--text-primary);
+            border: 1px solid rgba(250,219,95,0.5); color: var(--text-primary);
             padding: 0.45rem 1.1rem; border-radius: 24px; font-size: 0.9rem;
             cursor: pointer; transition: all var(--transition-smooth); letter-spacing: 1px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden;
         }
         .btn:hover { background: rgba(60,50,30,0.9); border-color: var(--gold); color: #fff; box-shadow: 0 0 25px var(--gold-glow); transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
-        .btn.admin-btn { border-color: rgba(230,85,74,0.6); color: #f0a0a0; background: rgba(40,20,20,0.8); }
-        .btn.primary-btn { background: rgba(240,212,138,0.2); border-color: var(--gold); color: var(--gold-bright); font-weight: bold; }
+        .btn.admin-btn { border-color: rgba(255,107,107,0.6); color: #f0a0a0; background: rgba(40,20,20,0.8); }
+        .btn.primary-btn { background: rgba(250,219,95,0.2); border-color: var(--gold); color: var(--gold-bright); font-weight: bold; }
         .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; border-radius: 18px; }
-        .btn-danger { border-color: rgba(230,85,74,0.6) !important; color: #f0a0a0 !important; }
-        .btn-danger:hover { background: rgba(230,85,74,0.25) !important; box-shadow: 0 0 20px var(--vermillion-glow) !important; }
+        .btn-danger { border-color: rgba(255,107,107,0.6) !important; color: #f0a0a0 !important; }
+        .btn-danger:hover { background: rgba(255,107,107,0.25) !important; box-shadow: 0 0 20px var(--vermillion-glow) !important; }
 
         .toolbar { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.5rem; }
         .search-box {
@@ -139,11 +140,11 @@
         .search-box:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-glow); }
         .tag-filter { display: flex; gap: 0.4rem; flex-wrap: wrap; }
         .tag-chip {
-            background: rgba(240,212,138,0.12); border: 1px solid rgba(240,212,138,0.35);
+            background: rgba(250,219,95,0.12); border: 1px solid rgba(250,219,95,0.35);
             padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.75rem;
             color: var(--gold); cursor: pointer; transition: var(--transition-smooth);
         }
-        .tag-chip.active, .tag-chip:hover { background: rgba(240,212,138,0.3); border-color: var(--gold); color: #fff; }
+        .tag-chip.active, .tag-chip:hover { background: rgba(250,219,95,0.3); border-color: var(--gold); color: #fff; }
 
         .articles-grid { display: grid; grid-template-columns: 1fr; gap: 1.3rem; }
         @media (min-width: 768px) { .articles-grid { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); } }
@@ -165,7 +166,7 @@
         .card-title {
             font-family: var(--font-calligraphy); font-size: 1.3rem;
             color: var(--gold-bright); letter-spacing: 2px;
-            text-shadow: 0 0 8px rgba(240,212,138,0.4); line-height: 1.4; flex: 1;
+            text-shadow: 0 0 8px rgba(250,219,95,0.4); line-height: 1.4; flex: 1;
         }
         .card-seal {
             flex-shrink: 0; width: 44px; height: 44px; background: var(--vermillion); color: #fff;
@@ -173,16 +174,16 @@
             font-size: 1.4rem; box-shadow: 0 0 15px var(--vermillion-glow);
             animation: sealGlow 2s ease-in-out infinite alternate;
         }
-        @keyframes sealGlow { 0% { box-shadow: 0 0 8px rgba(230,85,74,0.6); } 100% { box-shadow: 0 0 22px rgba(250,120,110,0.9); } }
+        @keyframes sealGlow { 0% { box-shadow: 0 0 8px rgba(255,107,107,0.6); } 100% { box-shadow: 0 0 22px rgba(255,120,110,0.9); } }
         .card-summary { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .card-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.78rem; color: var(--text-muted); margin-top: auto; }
-        .card-tag { display: inline-block; background: rgba(240,212,138,0.15); border: 1px solid rgba(240,212,138,0.4); padding: 0.2rem 0.6rem; border-radius: 14px; font-size: 0.75rem; letter-spacing: 1px; color: var(--gold); }
+        .card-tag { display: inline-block; background: rgba(250,219,95,0.15); border: 1px solid rgba(250,219,95,0.4); padding: 0.2rem 0.6rem; border-radius: 14px; font-size: 0.75rem; letter-spacing: 1px; color: var(--gold); }
         .reading-time { display: flex; align-items: center; gap: 0.3rem; }
         .reading-time::before { content: '⏳'; font-size: 0.7rem; }
         .author-badge { font-size: 0.8rem; color: var(--gold); margin-left: auto; display: flex; align-items: center; gap: 0.3rem; }
         .author-badge::before { content: '✍️'; font-size: 0.7rem; }
 
-        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--font-calligraphy); font-size: 1.2rem; letter-spacing: 2px; border: 2px dashed rgba(240,212,138,0.3); border-radius: var(--radius-lg); background: rgba(30,30,50,0.5); }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--font-calligraphy); font-size: 1.2rem; letter-spacing: 2px; border: 2px dashed rgba(250,219,95,0.3); border-radius: var(--radius-lg); background: rgba(30,30,50,0.5); }
         .empty-icon { font-size: 3rem; display: block; margin-bottom: 0.8rem; animation: floatIcon 3s ease-in-out infinite; }
         @keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
@@ -196,18 +197,18 @@
         @keyframes scrollUnfold { 0% { transform: scaleY(0.3); opacity: 0; } 100% { transform: scaleY(1); opacity: 1; } }
         .detail-header { border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.2rem; margin-bottom: 1.5rem; position: relative; }
         .detail-header::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 40%; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); box-shadow: 0 0 8px var(--gold-glow); }
-        .detail-title { font-family: var(--font-calligraphy); font-size: clamp(1.6rem, 3vw, 2.4rem); color: var(--gold-bright); letter-spacing: 3px; text-shadow: 0 0 12px rgba(240,212,138,0.5); margin-bottom: 0.6rem; }
+        .detail-title { font-family: var(--font-calligraphy); font-size: clamp(1.6rem, 3vw, 2.4rem); color: var(--gold-bright); letter-spacing: 3px; text-shadow: 0 0 12px rgba(250,219,95,0.5); margin-bottom: 0.6rem; }
         .detail-meta { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; font-size: 0.85rem; color: var(--text-muted); }
-        .detail-tag { display: inline-block; background: rgba(240,212,138,0.12); border: 1px solid rgba(240,212,138,0.4); padding: 0.2rem 0.7rem; border-radius: 14px; font-size: 0.78rem; letter-spacing: 1px; color: var(--gold); }
+        .detail-tag { display: inline-block; background: rgba(250,219,95,0.12); border: 1px solid rgba(250,219,95,0.4); padding: 0.2rem 0.7rem; border-radius: 14px; font-size: 0.78rem; letter-spacing: 1px; color: var(--gold); }
         .detail-content { font-family: var(--font-body); font-size: 1rem; line-height: 1.9; color: var(--text-primary); word-break: break-word; }
         .detail-content h1,.detail-content h2,.detail-content h3 { font-family: var(--font-calligraphy); color: var(--gold-bright); margin-top: 1.5em; margin-bottom: 0.6em; }
-        .detail-content h2 { border-left: 3px solid var(--gold); padding-left: 0.8rem; text-shadow: 0 0 8px rgba(240,212,138,0.4); }
+        .detail-content h2 { border-left: 3px solid var(--gold); padding-left: 0.8rem; text-shadow: 0 0 8px rgba(250,219,95,0.4); }
         .detail-content p { margin-bottom: 0.8em; text-indent: 1.5em; }
-        .detail-content code { font-family: var(--font-mono); background: rgba(92,230,255,0.12); padding: 0.15em 0.5em; border-radius: 4px; color: var(--cyan-neon); border: 1px solid rgba(92,230,255,0.3); }
-        .detail-content pre { background: rgba(0,0,0,0.6); border: 1px solid rgba(92,230,255,0.3); border-radius: var(--radius-md); padding: 1rem 1.2rem; overflow-x: auto; margin: 1em 0; position: relative; }
+        .detail-content code { font-family: var(--font-mono); background: rgba(125,249,255,0.12); padding: 0.15em 0.5em; border-radius: 4px; color: var(--cyan-neon); border: 1px solid rgba(125,249,255,0.3); }
+        .detail-content pre { background: rgba(0,0,0,0.6); border: 1px solid rgba(125,249,255,0.3); border-radius: var(--radius-md); padding: 1rem 1.2rem; overflow-x: auto; margin: 1em 0; position: relative; }
         .detail-content pre::before { content: '◈ 代码'; position: absolute; top: -10px; left: 12px; font-size: 0.7rem; color: var(--cyan-neon); background: var(--bg-deep); padding: 0 8px; }
         .detail-content pre code { background: transparent; border: none; padding: 0; color: #e0e0e0; font-size: 0.85rem; }
-        .detail-content blockquote { border-left: 3px solid var(--gold); padding: 0.6rem 1rem; margin: 1em 0; background: rgba(240,212,138,0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); font-style: italic; }
+        .detail-content blockquote { border-left: 3px solid var(--gold); padding: 0.6rem 1rem; margin: 1em 0; background: rgba(250,219,95,0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); font-style: italic; }
         .detail-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 200; visibility: hidden; opacity: 0; transition: opacity 0.35s ease, visibility 0.35s; }
@@ -227,15 +228,15 @@
         .close-btn:hover { color: var(--vermillion); }
         .input-group { margin-bottom: 1.1rem; }
         .input-group label { display: block; margin-bottom: 0.35rem; color: var(--text-secondary); font-size: 0.85rem; letter-spacing: 1px; }
-        .input-group input, .input-group textarea { width: 100%; padding: 0.65rem 1rem; border: 1px solid rgba(240,212,138,0.4); border-radius: var(--radius-md); background: rgba(25,25,40,0.8); color: var(--text-primary); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: all var(--transition-smooth); }
-        .input-group input:focus, .input-group textarea:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-glow), 0 0 0 3px rgba(240,212,138,0.08); background: rgba(35,35,55,0.9); }
+        .input-group input, .input-group textarea { width: 100%; padding: 0.65rem 1rem; border: 1px solid rgba(250,219,95,0.4); border-radius: var(--radius-md); background: rgba(25,25,40,0.8); color: var(--text-primary); font-family: var(--font-body); font-size: 0.95rem; outline: none; transition: all var(--transition-smooth); }
+        .input-group input:focus, .input-group textarea:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-glow), 0 0 0 3px rgba(250,219,95,0.08); background: rgba(35,35,55,0.9); }
         .input-group textarea { min-height: 200px; resize: vertical; font-family: var(--font-body); line-height: 1.7; }
         .modal-actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
 
-        .admin-panel { background: rgba(35, 35, 55, 0.9); backdrop-filter: blur(14px); border: 1px solid rgba(230,85,74,0.4); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: 0 0 25px rgba(230,85,74,0.15), 0 4px 20px rgba(0,0,0,0.4); }
+        .admin-panel { background: rgba(35, 35, 55, 0.9); backdrop-filter: blur(14px); border: 1px solid rgba(255,107,107,0.4); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: 0 0 25px rgba(255,107,107,0.15), 0 4px 20px rgba(0,0,0,0.4); }
         .admin-panel h3 { font-family: var(--font-calligraphy); font-size: 1.5rem; color: #f0a0a0; letter-spacing: 2px; margin-bottom: 1rem; text-shadow: 0 0 10px var(--vermillion-glow); }
         .admin-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.2rem; }
-        .article-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px dashed rgba(240,212,138,0.25); flex-wrap: wrap; gap: 0.5rem; }
+        .article-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px dashed rgba(250,219,95,0.25); flex-wrap: wrap; gap: 0.5rem; }
         .article-manage-item .item-info { flex: 1; min-width: 150px; }
         .article-manage-item .item-title { color: var(--text-primary); font-weight: bold; }
         .article-manage-item .item-date { font-size: 0.75rem; color: var(--text-muted); }
@@ -243,7 +244,7 @@
 
         .toast { position: fixed; top: 20px; right: 20px; z-index: 300; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-family: var(--font-body); letter-spacing: 1px; font-size: 0.9rem; animation: toastIn 0.4s ease, toastOut 0.4s ease 2.5s forwards; box-shadow: 0 8px 25px rgba(0,0,0,0.6); pointer-events: none; backdrop-filter: blur(12px); }
         .toast-success { background: rgba(40,80,60,0.9); border: 1px solid rgba(120,200,140,0.6); color: #c0f0c8; }
-        .toast-error { background: rgba(80,30,30,0.9); border: 1px solid rgba(230,85,74,0.6); color: #f0a0a0; }
+        .toast-error { background: rgba(80,30,30,0.9); border: 1px solid rgba(255,107,107,0.6); color: #f0a0a0; }
         @keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
 
@@ -298,16 +299,22 @@
             <button class="btn" id="backFromAdminBtn" style="margin-bottom:1rem;">← 返回卷库</button>
             <div class="admin-panel" id="adminPanelContent">
                 <div class="admin-header">
-                    <h3>🔰 文章管理</h3>
-                    <div style="display:flex;gap:0.5rem;">
+                    <h3>🔰 管理面板</h3>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                         <button class="btn primary-btn" id="adminNewArticleBtn">📝 撰写新篇</button>
+                        <button class="btn admin-btn" id="articlesTabBtn">📝 文章管理</button>
                         <button class="btn admin-btn" id="reviewTabBtn">📋 待审核(<span id="pendingCount">0</span>)</button>
+                        <button class="btn admin-btn" id="quotaTabBtn" style="background:rgba(125,249,255,0.15);border-color:var(--cyan-neon);color:var(--cyan-neon);">⚡ 申请次数</button>
                     </div>
                 </div>
                 <div id="adminArticlesList"></div>
                 <div id="reviewPanel" style="display:none;margin-top:1.5rem;">
                     <h3 style="color:#f0a0a0;">📋 待审核文章</h3>
                     <div id="reviewList"></div>
+                </div>
+                <div id="quotaPanel" style="display:none;margin-top:1.5rem;">
+                    <h3 style="color:var(--cyan-neon);">⚡ 成员今日申请次数</h3>
+                    <div id="quotaList"></div>
                 </div>
             </div>
         </div>
@@ -325,6 +332,7 @@
             </form>
         </div>
     </div>
+
     <!-- 文章编辑模态框（含导入 .md 按钮） -->
     <div class="modal-overlay" id="articleModal">
         <div class="modal" style="max-width:640px;">
@@ -354,6 +362,7 @@
             </form>
         </div>
     </div>
+
     <!-- 删除确认模态框 -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal" style="max-width:400px;text-align:center;">
@@ -363,6 +372,7 @@
             <input type="hidden" id="confirmDeleteId">
         </div>
     </div>
+
     <!-- 申请文章模态框 -->
     <div class="modal-overlay" id="applyModal">
         <div class="modal" style="max-width:640px;">
@@ -391,7 +401,8 @@
             function formatDate(d) { if(!d) return ''; var dt = new Date(d); var ch = ['','元月','杏月','桃月','槐月','榴月','荷月','兰月','桂月','菊月','露月','葭月','腊月']; var m = dt.getMonth() + 1; var g = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']; var z = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return g[(dt.getFullYear()-4)%10] + z[(dt.getFullYear()-4)%12] + '年·' + (ch[m]||m+'月') + dt.getDate() + '日'; }
             function calcReadTime(t) { var w = (t||'').replace(/[^\u4e00-\u9fa5a-zA-Z]/g,'').length; return Math.max(1, Math.round(w/400)); }
 
-            var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null, showReview = false;
+            var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null;
+            var currentTab = 'articles'; // articles, review, quota
             var applyQuotaRemaining = 0;
 
             async function apiCall(url, opt, silent) {
@@ -436,7 +447,7 @@
                 var views = $$('.view'); for (var i=0; i<views.length; i++) views[i].classList.remove('active');
                 var target = $('#view' + v.charAt(0).toUpperCase() + v.slice(1)); if (target) target.classList.add('active');
                 if (v === 'list') { renderList(); renderTags(); }
-                if (v === 'admin') renderAdmin();
+                if (v === 'admin') { currentTab = 'articles'; renderAdmin(); }
                 window.scrollTo({ top:0 });
             }
 
@@ -449,7 +460,7 @@
                 if (!currentUser || currentUser.role !== 'admin') return;
                 try { pendingApps = await apiCall('/api/article-applications'); } catch(e) { pendingApps = []; }
                 var count = $('#pendingCount'); if (count) count.textContent = pendingApps.length;
-                if (showReview) renderReview();
+                if (currentTab === 'review') renderReview();
             }
             async function updateApplyQuota() {
                 if (!currentUser || currentUser.role === 'admin') { $('#applyQuota').classList.add('hidden'); return; }
@@ -551,18 +562,27 @@
                 if (currentView==='admin') renderAdmin();
                 if (currentView==='detail') switchView('list');
             }
+
             function renderAdmin() {
-                var container = $('#adminArticlesList'), reviewPanel = $('#reviewPanel');
-                if (showReview) { container.style.display = 'none'; reviewPanel.style.display = 'block'; renderReview(); }
-                else {
-                    container.style.display = 'block'; reviewPanel.style.display = 'none';
+                var articlesContainer = $('#adminArticlesList');
+                var reviewPanel = $('#reviewPanel');
+                var quotaPanel = $('#quotaPanel');
+                articlesContainer.style.display = reviewPanel.style.display = quotaPanel.style.display = 'none';
+                if (currentTab === 'articles') {
+                    articlesContainer.style.display = 'block';
                     var html = '';
                     for (var i=0; i<articles.length; i++) {
                         var a = articles[i];
                         html += '<div class="article-manage-item"><div class="item-info"><span class="item-title">' + escapeHtml(a.title) + '</span><span class="item-date">' + formatDate(a.createdAt) + ' by ' + escapeHtml(a.author||'佚名') + '</span></div><div class="item-actions"><button class="btn btn-sm edit-btn" data-id="' + escapeHtml(a.id) + '">✏️</button><button class="btn btn-sm btn-danger delete-btn" data-id="' + escapeHtml(a.id) + '">🗑️</button></div></div>';
                     }
-                    container.innerHTML = html;
-                    container.onclick = function(ev) { if (ev.target.classList.contains('edit-btn')) openEditor(ev.target.dataset.id); else if (ev.target.classList.contains('delete-btn')) confirmDel(ev.target.dataset.id, ev.target.dataset.title); };
+                    articlesContainer.innerHTML = html;
+                    articlesContainer.onclick = function(ev) { if (ev.target.classList.contains('edit-btn')) openEditor(ev.target.dataset.id); else if (ev.target.classList.contains('delete-btn')) confirmDel(ev.target.dataset.id, ev.target.dataset.title); };
+                } else if (currentTab === 'review') {
+                    reviewPanel.style.display = 'block';
+                    renderReview();
+                } else if (currentTab === 'quota') {
+                    quotaPanel.style.display = 'block';
+                    renderQuota();
                 }
             }
             function renderReview() {
@@ -575,6 +595,33 @@
                 }
                 container.innerHTML = html;
                 container.onclick = function(ev) { var id = ev.target.dataset.id; if (ev.target.classList.contains('approve-btn')) approveApplication(id); else if (ev.target.classList.contains('reject-btn')) rejectApplication(id); };
+            }
+            async function renderQuota() {
+                var container = $('#quotaList');
+                try {
+                    var data = await apiCall('/api/apply-quota/all');
+                    if (!data || !data.length) { container.innerHTML = '<p style="color:var(--text-muted);">暂无用户数据</p>'; return; }
+                    var html = '';
+                    for (var i=0; i<data.length; i++) {
+                        var u = data[i];
+                        html += '<div class="article-manage-item"><div class="item-info"><span class="item-title">' + escapeHtml(u.username) + '</span><span class="item-date">今日已用 ' + u.used + ' / ' + u.limit + ' 次</span></div><div class="item-actions"><button class="btn btn-sm reset-quota-btn" data-username="' + escapeHtml(u.username) + '">🔄 重置</button></div></div>';
+                    }
+                    container.innerHTML = html;
+                    container.onclick = function(ev) {
+                        if (ev.target.classList.contains('reset-quota-btn')) {
+                            var username = ev.target.dataset.username;
+                            if (confirm('确定要重置 ' + username + ' 今日的申请次数吗？')) resetUserQuota(username);
+                        }
+                    };
+                } catch(e) { container.innerHTML = '<p style="color:var(--text-muted);">加载失败</p>'; }
+            }
+            async function resetUserQuota(username) {
+                try {
+                    await apiCall('/api/apply-quota/reset/' + encodeURIComponent(username), { method:'POST' });
+                    showToast('已重置 ' + username + ' 的申请次数');
+                    renderQuota();
+                    if (currentUser && currentUser.username === username) updateApplyQuota();
+                } catch(e) { showToast('重置失败: ' + e.message, 'error'); }
             }
             async function approveApplication(id) {
                 try { await apiCall('/api/article-applications/' + id + '/approve', { method:'POST' }); showToast('已批准并发布'); }
@@ -592,25 +639,19 @@
             function initMdImport() {
                 var importBtn = $('#importMdBtn');
                 var fileInput = $('#mdFileInput');
-
-                importBtn.addEventListener('click', function() {
-                    fileInput.click();
-                });
-
+                importBtn.addEventListener('click', function() { fileInput.click(); });
                 fileInput.addEventListener('change', function(e) {
                     var file = e.target.files[0];
                     if (!file) return;
                     var reader = new FileReader();
                     reader.onload = function(event) {
                         var text = event.target.result;
-                        // 使用文件名（去除扩展名）作为标题
                         var fileName = file.name.replace(/\.md$/i, '');
                         $('#articleTitle').value = fileName;
                         $('#articleContent').value = text;
                         showToast('已导入 ' + file.name, 'success');
                     };
                     reader.readAsText(file, 'UTF-8');
-                    // 重置input，允许重复导入同一文件
                     fileInput.value = '';
                 });
             }
@@ -624,7 +665,7 @@
                 function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
                 window.addEventListener('resize', resize); resize();
                 document.addEventListener('click', function(e) {
-                    var colors = ['rgba(240,212,138,0.8)', 'rgba(230,85,74,0.7)', 'rgba(92,230,255,0.6)', 'rgba(180,150,120,0.7)'];
+                    var colors = ['rgba(250,219,95,0.8)', 'rgba(255,107,107,0.7)', 'rgba(125,249,255,0.6)', 'rgba(200,180,140,0.7)'];
                     ripples.push({ x:e.clientX, y:e.clientY, radius:5, maxRadius:60+Math.random()*60, opacity:0.8, color:colors[Math.floor(Math.random()*colors.length)], speed:1.2+Math.random()*0.8 });
                     if (ripples.length > 20) ripples.shift();
                 });
@@ -648,7 +689,7 @@
                 window.addEventListener('resize', resize); resize();
                 function drawPetal(ctx, x, y, size, rot, color) { ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.fillStyle=color; ctx.beginPath(); ctx.ellipse(0,0,size*0.6,size*0.2,0,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(0,0,size*0.2,size*0.6,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
                 function Particle() { this.reset(true); }
-                Particle.prototype.reset = function(init) { this.x=Math.random()*w; this.y=init?Math.random()*h:-20; this.size=1+Math.random()*3; this.speedY=0.3+Math.random()*1.5; this.speedX=(Math.random()-0.5)*0.8; this.opacity=0.4+Math.random()*0.6; this.type=Math.random()>0.6?'petal':(Math.random()>0.5?'gold':'cyan'); if(this.type==='petal'){ this.color='rgba(255,200,210,'+this.opacity+')'; this.rotation=Math.random()*Math.PI*2; this.rotSpeed=(Math.random()-0.5)*0.02; } else if(this.type==='gold') this.color='rgba(240,212,138,'+this.opacity+')'; else this.color='rgba(92,230,255,'+this.opacity+')'; };
+                Particle.prototype.reset = function(init) { this.x=Math.random()*w; this.y=init?Math.random()*h:-20; this.size=1+Math.random()*3; this.speedY=0.3+Math.random()*1.5; this.speedX=(Math.random()-0.5)*0.8; this.opacity=0.4+Math.random()*0.6; this.type=Math.random()>0.6?'petal':(Math.random()>0.5?'gold':'cyan'); if(this.type==='petal'){ this.color='rgba(255,200,210,'+this.opacity+')'; this.rotation=Math.random()*Math.PI*2; this.rotSpeed=(Math.random()-0.5)*0.02; } else if(this.type==='gold') this.color='rgba(250,219,95,'+this.opacity+')'; else this.color='rgba(125,249,255,'+this.opacity+')'; };
                 Particle.prototype.update = function() { this.y+=this.speedY; this.x+=Math.sin(this.y*0.02)*this.speedX; if(this.type==='petal') this.rotation+=this.rotSpeed; if(this.y>h+30||this.x<-30||this.x>w+30) this.reset(false); };
                 Particle.prototype.draw = function(ctx) { ctx.globalAlpha=this.opacity; if(this.type==='petal') drawPetal(ctx,this.x,this.y,this.size*2,this.rotation,this.color); else { ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; };
                 for (var i=0; i<80; i++) particles.push(new Particle());
@@ -706,11 +747,10 @@
                     } catch(e) { showToast('提交失败: '+e.message,'error'); }
                 });
 
-                $('#reviewTabBtn').addEventListener('click', function(){
-                    showReview = !showReview;
-                    this.innerHTML = showReview ? '📝 管理文章' : '📋 待审核(<span id="pendingCount">' + pendingApps.length + '</span>)';
-                    renderAdmin();
-                });
+                // 管理面板标签切换
+                $('#articlesTabBtn').addEventListener('click', function() { currentTab = 'articles'; renderAdmin(); });
+                $('#reviewTabBtn').addEventListener('click', function() { currentTab = 'review'; loadApplications(); renderAdmin(); });
+                $('#quotaTabBtn').addEventListener('click', function() { currentTab = 'quota'; renderAdmin(); });
 
                 var overlays = $$('.modal-overlay');
                 for (var i=0; i<overlays.length; i++) {
@@ -722,7 +762,7 @@
             async function init() {
                 initRipples();
                 initParticles();
-                initMdImport();  // 初始化 .md 导入功能
+                initMdImport();
                 bindEvents();
                 await loadArticles();
                 await checkLogin();
