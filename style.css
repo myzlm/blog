@@ -443,24 +443,9 @@ body::before {
     overflow: visible;
 }
 
+/* 完全移除旋转光环 */
 .article-detail .detail-halo {
-    position: absolute;
-    top: -3px;
-    left: -3px;
-    right: -3px;
-    bottom: -3px;
-    border-radius: inherit;
-    pointer-events: none;
-    z-index: -1;
-    background: conic-gradient(from 0deg, transparent, var(--gold), var(--cyan-neon), var(--vermillion), var(--gold), transparent);
-    animation: haloRotate 6s linear infinite;
-    opacity: 0.4;
-    filter: blur(8px);
-}
-
-@keyframes haloRotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    display: none !important;
 }
 
 .detail-header {
@@ -483,11 +468,10 @@ body::before {
     color: var(--text-muted);
 }
 
-/* 文章内容 – 横排，并允许横向滚动（表格、代码块） */
 .detail-content {
     font-size: 1rem;
     line-height: var(--line-height-article);
-    overflow-x: auto;          /* 关键：横向滚动 */
+    overflow-x: auto;
     word-wrap: break-word;
 }
 
@@ -496,7 +480,6 @@ body::before {
     padding-left: 0.8rem;
 }
 
-/* 代码块 & 表格 自动滚动 */
 .detail-content pre,
 .detail-content table {
     display: block;
@@ -519,7 +502,7 @@ body::before {
 }
 
 /* ====================================================
-   竹简皮肤 – 横排 + 强烈纹理 + 古风美化
+   竹简皮肤 – 分页模式（无滚动，翻页浏览）
    ==================================================== */
 .skin-bamboo .main-container {
     border-left: 12px solid #5c3e22;
@@ -529,9 +512,8 @@ body::before {
     padding-right: 1rem;
 }
 
-/* 文章详情 – 竹简卷轴效果 */
 .skin-bamboo .article-detail {
-    background: #dac8b0;                    /* 古纸底色 */
+    background: #dac8b0;
     color: #2a1a0a;
     padding: 30px 25px;
     border-radius: 4px 20px 20px 4px;
@@ -542,7 +524,7 @@ body::before {
     overflow: hidden;
 }
 
-/* 竹简纹路 – 使用重复的竹节纹理 SVG */
+/* 竹简纹路 */
 .skin-bamboo .article-detail::before {
     content: '';
     position: absolute;
@@ -558,9 +540,9 @@ body::before {
     z-index: 0;
 }
 
-/* 竹简内容区 – 横排，可横向滚动 */
+/* 竹简内容容器 – 分页视图 */
 .skin-bamboo .article-detail .detail-content {
-    background: rgba(235, 220, 200, 0.7);   /* 半透明白，衬托文字 */
+    background: rgba(235, 220, 200, 0.7);
     padding: 20px 18px;
     border-radius: 8px;
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
@@ -569,9 +551,73 @@ body::before {
     color: #2a1a0a;
     position: relative;
     z-index: 1;
-    overflow-x: auto;          /* 横向滚动 */
-    overflow-y: visible;
-    max-width: 100%;
+    overflow: hidden;
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 竹简分页 – 列容器 */
+.skin-bamboo .bamboo-page-container {
+    display: flex;
+    flex-wrap: nowrap;
+    height: 100%;
+    width: 100%;
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform;
+}
+
+/* 每一列 – 竖排书写 */
+.skin-bamboo .bamboo-column {
+    writing-mode: vertical-rl;
+    flex: 0 0 auto;
+    height: 100%;
+    padding: 0 12px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    border-right: 1px dashed rgba(90, 60, 30, 0.2);
+    font-size: 1rem;
+    line-height: 2.0;
+    min-width: 150px;
+    max-width: 280px;
+}
+
+/* 翻页控制栏 */
+.skin-bamboo .bamboo-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem 0;
+    position: relative;
+    z-index: 2;
+}
+
+.skin-bamboo .bamboo-controls button {
+    background: rgba(60, 40, 20, 0.7);
+    border: 1px solid #8a6a4a;
+    color: #f0e6d2;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.3s;
+    backdrop-filter: blur(4px);
+}
+.skin-bamboo .bamboo-controls button:hover:not(:disabled) {
+    background: #8a6a4a;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(200, 150, 80, 0.5);
+}
+.skin-bamboo .bamboo-controls button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.skin-bamboo .bamboo-controls .page-info {
+    color: #4a2a1a;
+    font-size: 0.95rem;
+    font-weight: bold;
 }
 
 /* 竹简 – 标题、元数据颜色 */
@@ -579,7 +625,6 @@ body::before {
     color: #4a2a1a;
     text-shadow: 1px 1px 0 #b89a7a;
 }
-
 .skin-bamboo .detail-meta {
     color: #5a3a2a;
 }
@@ -591,14 +636,13 @@ body::before {
     border-radius: 12px 30px 12px 30px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
-
 .skin-bamboo .article-card:hover {
     border-color: var(--gold);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 25px #c8a96e;
 }
 
 /* ====================================================
-   玉玺皮肤 – 保留原有效果（未改动）
+   玉玺皮肤 – 保留原有效果
    ==================================================== */
 .skin-jade .article-detail {
     background: #faf3e0;
