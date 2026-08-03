@@ -47,7 +47,10 @@
         currentSkin = skin; localStorage.setItem('blog_skin', skin);
         document.querySelectorAll('.skin-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.skin === skin));
         clearAnnotations(); toggleAnnotationMode(false); updateAnnotateButtonVisibility();
-        if (currentView === 'detail') resetJadeDecorations();
+        // 如果当前在详情页，重新渲染以应用皮肤样式（特别是竹简分页）
+        if (currentView === 'detail' && currentArticleId) {
+            viewArticle(currentArticleId); // 重新加载并渲染
+        }
     }
     function clearAnnotations() { document.querySelectorAll('.annotation-tag').forEach(tag => tag.remove()); }
     function resetJadeDecorations() {
@@ -111,33 +114,254 @@
     }
     function renderTags() { var all = {}; articles.forEach(a => (a.tags||[]).forEach(t => all[t]=true)); var arr = Object.keys(all); $('#tagFilter').innerHTML = '<span class="tag-chip' + (activeTag?'':' active') + '" data-tag="">全部</span>' + arr.map(t => `<span class="tag-chip${activeTag===t?' active':''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join(''); $('#tagFilter').onclick = e => { if (e.target.classList.contains('tag-chip')) { activeTag = e.target.dataset.tag || null; renderList(); renderTags(); } }; }
 
-    async function viewArticle(id) { try { var a = await apiCall('/api/articles/'+encodeURIComponent(id)); if (!a) { showToast('文章不存在','error'); return; } renderDetail(a); switchView('detail'); currentArticleId = id; } catch(e) { showToast('加载失败: '+e.message,'error'); } }
+    // =============== 竹简分页系统 ===============
+    var bambooState = { currentPage: 0, totalPages: 0, columns: [], colsPerPage: 1 };
+
+    function initBambooPagination(container, rawText) {
+        if (!container) return;
+        // 移除旧的控制栏（如果有）
+        var oldControls = container.parentNode.querySelector('.bamboo-controls');
+        if (oldControls) oldControls.remove();
+        // 清除容器内容
+        container.innerHTML = '';
+
+        // 计算可用宽度和列数
+        var rect = container.getBoundingClientRect();
+        var containerWidth = rect.width - 40; // 减去内边距
+        if (containerWidth < 100) containerWidth = 400; // 保底
+        var columnMinWidth = 150;
+        var columnMaxWidth = 280;
+        // 根据容器宽度计算列数（自适应）
+        var columnCount = Math.floor(containerWidth / columnMinWidth);
+        if (columnCount < 1) columnCount = 1;
+        // 限制最大列数（避免太碎）
+        var maxCols = Math.floor(containerWidth / 120);
+        if (columnCount > maxCols) columnCount = maxCols;
+        // 计算实际列宽
+        var columnWidth = Math.min(columnMaxWidth, containerWidth / columnCount);
+        if (columnWidth < columnMinWidth) columnWidth = columnMinWidth;
+
+        // 分割内容为列（按字符数平均分配）
+        var totalChars = rawText.length;
+        if (totalChars === 0) rawText = '（空）';
+        var charsPerColumn = Math.ceil(totalChars / columnCount);
+        var columns = [];
+        for (var i = 0; i < columnCount; i++) {
+            var start = i * charsPerColumn;
+            var end = Math.min((i + 1) * charsPerColumn, totalChars);
+            var text = rawText.substring(start, end);
+            if (text.trim().length === 0 && i < columnCount - 1) {
+                text = '　'; // 占位空白
+            }
+            columns.push(text);
+        }
+
+        // 存储所有列数据，用于翻页
+        bambooState.columns = columns;
+        bambooState.currentPage = 0;
+        bambooState.totalPages = Math.ceil(columns.length / columnCount);
+        var colsPerPage = Math.floor(containerWidth / columnWidth);
+        if (colsPerPage < 1) colsPerPage = 1;
+        bambooState.colsPerPage = colsPerPage;
+
+        // 创建翻页容器
+        var pageContainer = document.createElement('div');
+        pageContainer.className = 'bamboo-page-container';
+        pageContainer.style.width = (columns.length * columnWidth) + 'px';
+        pageContainer.style.display = 'flex';
+        pageContainer.style.flexWrap = 'nowrap';
+        pageContainer.style.transition = 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+        pageContainer.style.willChange = 'transform';
+        pageContainer.style.height = '100%';
+
+        // 创建每一列
+        columns.forEach(function(text, idx) {
+            var col = document.createElement('div');
+            col.className = 'bamboo-column';
+            col.style.width = columnWidth + 'px';
+            col.style.flex = '0 0 auto';
+            col.style.height = '100%';
+            col.style.padding = '0 12px';
+            col.style.boxSizing = 'border-box';
+            col.style.overflowY = 'auto';
+            col.style.borderRight = '1px dashed rgba(90, 60, 30, 0.2)';
+            col.style.fontSize = '1rem';
+            col.style.lineHeight = '2.0';
+            col.style.minWidth = '150px';
+            col.style.maxWidth = '280px';
+            col.style.writingMode = 'vertical-rl';
+            col.textContent = text;
+            pageContainer.appendChild(col);
+        });
+
+        container.appendChild(pageContainer);
+
+        // 创建控制栏
+        var controls = document.createElement('div');
+        controls.className = 'bamboo-controls';
+        controls.style.display = 'flex';
+        controls.style.alignItems = 'center';
+        controls.style.justifyContent = 'center';
+        controls.style.gap = '1.5rem';
+        controls.style.marginTop = '1rem';
+        controls.style.padding = '0.5rem 0';
+        controls.style.position = 'relative';
+        controls.style.zIndex = '2';
+        controls.innerHTML = `
+            <button class="bamboo-prev" ${bambooState.currentPage === 0 ? 'disabled' : ''}>◀ 上一卷</button>
+            <span class="page-info">${bambooState.currentPage + 1} / ${bambooState.totalPages}</span>
+            <button class="bamboo-next" ${bambooState.currentPage >= bambooState.totalPages - 1 ? 'disabled' : ''}>下一卷 ▶</button>
+        `;
+        // 样式内联或通过CSS，这里直接内联
+        var btns = controls.querySelectorAll('button');
+        btns.forEach(function(btn) {
+            btn.style.background = 'rgba(60, 40, 20, 0.7)';
+            btn.style.border = '1px solid #8a6a4a';
+            btn.style.color = '#f0e6d2';
+            btn.style.padding = '0.4rem 1.2rem';
+            btn.style.borderRadius = '20px';
+            btn.style.fontSize = '0.9rem';
+            btn.style.cursor = 'pointer';
+            btn.style.transition = '0.3s';
+            btn.style.backdropFilter = 'blur(4px)';
+            btn.disabled && (btn.style.opacity = '0.4');
+        });
+        var info = controls.querySelector('.page-info');
+        info.style.color = '#4a2a1a';
+        info.style.fontSize = '0.95rem';
+        info.style.fontWeight = 'bold';
+
+        container.parentNode.insertBefore(controls, container.nextSibling);
+
+        // 绑定翻页事件
+        controls.querySelector('.bamboo-prev').addEventListener('click', function() {
+            if (bambooState.currentPage > 0) {
+                bambooState.currentPage--;
+                updateBambooPage(container, pageContainer);
+            }
+        });
+        controls.querySelector('.bamboo-next').addEventListener('click', function() {
+            if (bambooState.currentPage < bambooState.totalPages - 1) {
+                bambooState.currentPage++;
+                updateBambooPage(container, pageContainer);
+            }
+        });
+
+        // 窗口大小变化时重新计算列宽和分页（防抖）
+        var resizeTimer;
+        var resizeHandler = function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                // 重新初始化（保留当前页）
+                var current = bambooState.currentPage;
+                initBambooPagination(container, rawText);
+                // 尝试跳转到相近页
+                var newTotal = bambooState.totalPages;
+                if (current >= newTotal) current = newTotal - 1;
+                if (current < 0) current = 0;
+                bambooState.currentPage = current;
+                var newPageContainer = container.querySelector('.bamboo-page-container');
+                if (newPageContainer) updateBambooPage(container, newPageContainer);
+            }, 300);
+        };
+        window.addEventListener('resize', resizeHandler);
+        // 存储清除函数，避免内存泄漏（可忽略）
+
+        // 应用初始位置
+        updateBambooPage(container, pageContainer);
+    }
+
+    function updateBambooPage(container, pageContainer) {
+        if (!pageContainer) return;
+        var colsPerPage = bambooState.colsPerPage || 1;
+        var totalCols = bambooState.columns.length;
+        var maxPage = Math.ceil(totalCols / colsPerPage) - 1;
+        if (bambooState.currentPage > maxPage) bambooState.currentPage = maxPage;
+        if (bambooState.currentPage < 0) bambooState.currentPage = 0;
+
+        var offset = bambooState.currentPage * colsPerPage;
+        var colWidth = pageContainer.firstChild ? pageContainer.firstChild.offsetWidth : 200;
+        var translateX = -offset * colWidth;
+        pageContainer.style.transform = 'translateX(' + translateX + 'px)';
+
+        // 更新按钮状态和页码
+        var controls = container.parentNode.querySelector('.bamboo-controls');
+        if (controls) {
+            var prevBtn = controls.querySelector('.bamboo-prev');
+            var nextBtn = controls.querySelector('.bamboo-next');
+            var info = controls.querySelector('.page-info');
+            if (prevBtn) {
+                prevBtn.disabled = (bambooState.currentPage === 0);
+                prevBtn.style.opacity = prevBtn.disabled ? '0.4' : '1';
+            }
+            if (nextBtn) {
+                nextBtn.disabled = (bambooState.currentPage >= maxPage);
+                nextBtn.style.opacity = nextBtn.disabled ? '0.4' : '1';
+            }
+            if (info) info.textContent = (bambooState.currentPage + 1) + ' / ' + (maxPage + 1);
+        }
+    }
+    // =============== 竹简分页系统结束 ===============
+
+    async function viewArticle(id) {
+        try {
+            var a = await apiCall('/api/articles/'+encodeURIComponent(id));
+            if (!a) { showToast('文章不存在','error'); return; }
+            renderDetail(a);
+            switchView('detail');
+            currentArticleId = id;
+        } catch(e) {
+            showToast('加载失败: '+e.message,'error');
+        }
+    }
+
     function renderDetail(a) {
         var container = $('#articleDetailContent');
         var raw = a.content || '';
-        try { var contentHtml = typeof marked !== 'undefined' ? marked.parse(raw) : escapeHtml(raw).replace(/\n/g,'<br>'); } catch(e) { contentHtml = escapeHtml(raw).replace(/\n/g,'<br>'); }
+        // 如果是竹简皮肤，我们不需要渲染HTML，而是使用纯文本分列
+        // 但仍需要标题、元数据，所以先构造基础结构，内容部分由 initBambooPagination 填充
+        // 但为了兼容其他皮肤，我们要保留原渲染方式
+        var isBamboo = (currentSkin === 'bamboo');
+        var contentHtml = '';
+        if (!isBamboo) {
+            try { contentHtml = typeof marked !== 'undefined' ? marked.parse(raw) : escapeHtml(raw).replace(/\n/g,'<br>'); } catch(e) { contentHtml = escapeHtml(raw).replace(/\n/g,'<br>'); }
+        } else {
+            // 竹简皮肤下，内容区先留空，稍后由 initBambooPagination 填充
+            contentHtml = '';
+        }
         container.innerHTML = `<div class="detail-halo"></div><div class="detail-header"><h1 class="detail-title">${escapeHtml(a.title)}</h1><div class="detail-meta"><span>📅 ${formatDate(a.createdAt)}</span>${(a.tags||[]).map(t=>`<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}<span class="author-badge" style="margin-left:auto;">${escapeHtml(a.author||'佚名')}</span></div></div><div class="detail-content">${contentHtml}</div><div class="detail-actions"></div><button class="btn btn-sm annotate-btn" id="annotateToggle">🖌️ 朱批</button>`;
-        container.querySelector('.detail-content').addEventListener('click', function(e) {
-            if (!annotationMode || currentSkin !== 'jade') return;
-            var rect = container.getBoundingClientRect();
-            var x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
-            var y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
-            currentAnnotationPos = {x, y};
-            $('#annotationModal').classList.add('active');
-            $('#annotationText').focus();
-        });
+
+        var contentEl = container.querySelector('.detail-content');
+        if (isBamboo) {
+            // 竹简分页初始化
+            initBambooPagination(contentEl, raw);
+        } else {
+            // 对于其他皮肤，若之前有残留的控制栏，移除
+            var oldControls = container.querySelector('.bamboo-controls');
+            if (oldControls) oldControls.remove();
+            // 确保内容正常显示（marked已处理）
+        }
+
         var annotateBtn = document.getElementById('annotateToggle');
         if (annotateBtn) annotateBtn.addEventListener('click', () => toggleAnnotationMode());
+
         if (a.annotations) a.annotations.forEach(ann => addAnnotationTag(ann.x, ann.y, ann.text));
+
+        // 玉玺皮肤装饰
         resetJadeDecorations();
         updateAnnotateButtonVisibility();
+
+        // 数学公式渲染
         try { if (typeof renderMathInElement === 'function') renderMathInElement(container, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); } catch(e) {}
+        // Mermaid
         try { var mn = container.querySelectorAll('.mermaid'); if (mn.length > 0) mermaid.run({ nodes: mn }); } catch(e) {}
+
         if (isAdmin()) {
             var actions = container.querySelector('.detail-actions');
             actions.innerHTML = `<button class="btn btn-sm" onclick="window._blogApp.editArticle('${escapeHtml(a.id)}')">✏️ 编辑</button><button class="btn btn-sm btn-danger" onclick="window._blogApp.confirmDeleteArticle('${escapeHtml(a.id)}','${escapeHtml(a.title||'')}')">🗑️ 删除</button>`;
         }
     }
+
     function addAnnotationTag(x, y, text) { var tag = document.createElement('div'); tag.className = 'annotation-tag'; tag.style.left = x + '%'; tag.style.top = y + '%'; tag.textContent = text; $('#articleDetailContent').appendChild(tag); }
 
     async function openEditor(id) {
@@ -177,7 +401,7 @@
         fi.addEventListener('change', function(e) { var f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { var ti = document.getElementById('articleTitle'); var ci = document.getElementById('articleContent'); if (ti) ti.value = f.name.replace(/\.md$/i, ''); if (ci) ci.value = ev.target.result; showToast('已导入 ' + f.name); }; r.readAsText(f, 'UTF-8'); fi.value = ''; });
     }
 
-    // 特效系统 (保持原逻辑)
+    // 特效系统
     function initTrail() {
         var canvas = document.getElementById('trailCanvas'), ctx = canvas.getContext('2d'), w, h, trail = [];
         function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
