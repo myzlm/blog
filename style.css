@@ -14,19 +14,19 @@
     --border-subtle: rgba(250, 219, 95, 0.35);
     --border-glow: rgba(250, 219, 95, 0.7);
     --font-calligraphy: 'ZCOOL QingKe HuangYou', 'Ma Shan Zheng', 'STXingkai', '华文行楷', 'KaiTi', '楷体', serif;
-    --font-body: 'Noto Serif SC', 'STSong', '宋体', 'KaiTi', serif;  /* 优化字体 */
+    --font-body: 'Noto Serif SC', 'STSong', '宋体', 'KaiTi', serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
     --radius-sm: 8px;
     --radius-md: 16px;
     --radius-lg: 24px;
     --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --line-height-article: 2.0;   /* 新增：文章行距变量 */
+    --line-height-article: 2.0;
 }
 
-/* 皮肤主题 */
+/* 竹简皮肤 */
 .skin-bamboo {
-    --bg-deep: #4a3420;
-    --bg-card: rgba(45, 36, 22, 0.9);
+    --bg-deep: #2c1f12;
+    --bg-card: rgba(50, 38, 24, 0.92);
     --gold: #c8a96e;
     --gold-bright: #e8d5a3;
     --vermillion: #c5533b;
@@ -34,8 +34,10 @@
     --text-primary: #f0e6d2;
     --text-secondary: #c8b898;
     --text-muted: #9b8a70;
+    --border-subtle: rgba(180, 140, 90, 0.5);
 }
 
+/* 玉玺皮肤 */
 .skin-jade {
     --bg-deep: #1a2a1a;
     --bg-card: rgba(20, 40, 20, 0.88);
@@ -289,6 +291,7 @@ body::before {
     color: #f0a0a0 !important;
 }
 
+/* ===== 文章列表 ===== */
 .articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
@@ -307,7 +310,7 @@ body::before {
     backdrop-filter: blur(18px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: 1.8rem 2rem;          /* 增加内边距，更透气 */
+    padding: 1.8rem 2rem;
     cursor: pointer;
     transition: transform 0.15s ease-out, box-shadow 0.4s;
     position: relative;
@@ -353,19 +356,6 @@ body::before {
     color: var(--vermillion);
 }
 
-@keyframes rainbowBorder {
-    0% { border-color: #fadb5f; }
-    25% { border-color: #ff6b6b; }
-    50% { border-color: #7df9ff; }
-    75% { border-color: #c08eff; }
-    100% { border-color: #fadb5f; }
-}
-
-.article-card.rainbow-glow {
-    animation: rainbowBorder 4s linear infinite;
-    border-width: 2px;
-}
-
 .card-header {
     display: flex;
     align-items: flex-start;
@@ -374,7 +364,7 @@ body::before {
 
 .card-title {
     font-family: var(--font-calligraphy);
-    font-size: 1.5rem;            /* 增大标题 */
+    font-size: 1.5rem;
     color: var(--gold-bright);
     letter-spacing: 2px;
     flex: 1;
@@ -441,7 +431,7 @@ body::before {
     margin-left: auto;
 }
 
-/* 文章详情 */
+/* ===== 文章详情（通用） ===== */
 .article-detail {
     background: var(--bg-card);
     backdrop-filter: blur(14px);
@@ -493,9 +483,12 @@ body::before {
     color: var(--text-muted);
 }
 
+/* 文章内容 – 横排，并允许横向滚动（表格、代码块） */
 .detail-content {
     font-size: 1rem;
-    line-height: var(--line-height-article);   /* 使用行距变量 */
+    line-height: var(--line-height-article);
+    overflow-x: auto;          /* 关键：横向滚动 */
+    word-wrap: break-word;
 }
 
 .detail-content h2 {
@@ -503,11 +496,18 @@ body::before {
     padding-left: 0.8rem;
 }
 
+/* 代码块 & 表格 自动滚动 */
+.detail-content pre,
+.detail-content table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
 .detail-content pre {
     background: rgba(0, 0, 0, 0.6);
     border-radius: var(--radius-md);
     padding: 1rem;
-    overflow-x: auto;
 }
 
 .detail-actions {
@@ -518,26 +518,31 @@ body::before {
     border-top: 1px solid var(--border-subtle);
 }
 
-/* ===== 竹简皮肤修复 + 美化 ===== */
+/* ====================================================
+   竹简皮肤 – 横排 + 强烈纹理 + 古风美化
+   ==================================================== */
 .skin-bamboo .main-container {
-    border-left: 8px solid #5c3e22;
-    border-right: 2px solid #3d2b14;
-    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.6);
+    border-left: 12px solid #5c3e22;
+    border-right: 4px solid #3d2b14;
+    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.7), -10px 0 20px rgba(0, 0, 0, 0.3);
     padding-left: 2rem;
+    padding-right: 1rem;
 }
 
+/* 文章详情 – 竹简卷轴效果 */
 .skin-bamboo .article-detail {
-    background: #dac8b0;               /* 仿古纸张底色 */
+    background: #dac8b0;                    /* 古纸底色 */
     color: #2a1a0a;
-    padding: 30px 20px;
-    border-radius: 4px;
-    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3), 0 10px 40px rgba(0, 0, 0, 0.7);
+    padding: 30px 25px;
+    border-radius: 4px 20px 20px 4px;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.25),
+                0 10px 40px rgba(0, 0, 0, 0.7);
     border: 1px solid #b89a7a;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
-/* 竹简纹理背景 */
+/* 竹简纹路 – 使用重复的竹节纹理 SVG */
 .skin-bamboo .article-detail::before {
     content: '';
     position: absolute;
@@ -545,48 +550,56 @@ body::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23b89a7a' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='80' viewBox='0 0 40 80'%3E%3Crect width='40' height='80' fill='%23dac8b0'/%3E%3Cline x1='4' y1='0' x2='4' y2='80' stroke='%23b89a7a' stroke-width='1.5' opacity='0.4'/%3E%3Cline x1='12' y1='0' x2='12' y2='80' stroke='%23b89a7a' stroke-width='1.5' opacity='0.4'/%3E%3Cline x1='20' y1='0' x2='20' y2='80' stroke='%23b89a7a' stroke-width='1.5' opacity='0.4'/%3E%3Cline x1='28' y1='0' x2='28' y2='80' stroke='%23b89a7a' stroke-width='1.5' opacity='0.4'/%3E%3Cline x1='36' y1='0' x2='36' y2='80' stroke='%23b89a7a' stroke-width='1.5' opacity='0.4'/%3E%3Crect x='0' y='10' width='40' height='2' fill='%23b89a7a' opacity='0.3'/%3E%3Crect x='0' y='30' width='40' height='2' fill='%23b89a7a' opacity='0.3'/%3E%3Crect x='0' y='50' width='40' height='2' fill='%23b89a7a' opacity='0.3'/%3E%3Crect x='0' y='70' width='40' height='2' fill='%23b89a7a' opacity='0.3'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 40px 80px;
+    opacity: 0.25;
     pointer-events: none;
     z-index: 0;
 }
 
+/* 竹简内容区 – 横排，可横向滚动 */
 .skin-bamboo .article-detail .detail-content {
-    /* 修复滚动：垂直方向溢出滚动 */
-    writing-mode: vertical-rl;
-    height: auto;                 /* 自适应内容高度 */
-    max-height: 60vh;            /* 限制最大高度 */
-    overflow-y: auto;            /* 垂直滚动 */
-    overflow-x: hidden;          /* 隐藏横向滚动（竖排模式下无横向） */
-    direction: rtl;
-    padding: 20px 15px;
-    background: #e8dccc;          /* 柔和的内底色 */
-    border-radius: 4px;
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
-    font-family: var(--font-calligraphy);
-    line-height: 1.8;
-    color: #2a1a0a;               /* 深色文字，便于阅读 */
+    background: rgba(235, 220, 200, 0.7);   /* 半透明白，衬托文字 */
+    padding: 20px 18px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+    font-family: var(--font-body);
+    line-height: 2.0;
+    color: #2a1a0a;
     position: relative;
     z-index: 1;
-    word-break: break-all;        /* 避免长单词溢出 */
+    overflow-x: auto;          /* 横向滚动 */
+    overflow-y: visible;
+    max-width: 100%;
 }
 
-/* 竹简皮肤下的标题颜色 */
+/* 竹简 – 标题、元数据颜色 */
 .skin-bamboo .detail-title {
-    color: #5a3a1a;
-    text-shadow: 2px 2px 0 #b89a7a;
+    color: #4a2a1a;
+    text-shadow: 1px 1px 0 #b89a7a;
 }
 
 .skin-bamboo .detail-meta {
-    color: #5a3a1a;
+    color: #5a3a2a;
 }
 
+/* 竹简 – 文章卡片适配 */
 .skin-bamboo .article-card {
-    background: rgba(60, 45, 30, 0.92);
+    background: rgba(50, 38, 24, 0.92);
     border-color: #8a6a4a;
+    border-radius: 12px 30px 12px 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
-/* ===== 玉玺皮肤保留原样，稍作微调 ===== */
+.skin-bamboo .article-card:hover {
+    border-color: var(--gold);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 25px #c8a96e;
+}
+
+/* ====================================================
+   玉玺皮肤 – 保留原有效果（未改动）
+   ==================================================== */
 .skin-jade .article-detail {
     background: #faf3e0;
     color: #3a2a1a;
@@ -913,7 +926,7 @@ body::before {
     font-weight: bold;
 }
 
-/* ===== 滚动条美化（全局） ===== */
+/* ===== 滚动条美化 ===== */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -934,7 +947,7 @@ body::before {
     background: var(--gold-bright);
 }
 
-/* Firefox 滚动条 */
+/* Firefox */
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--gold) rgba(0, 0, 0, 0.2);
