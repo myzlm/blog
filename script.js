@@ -23,6 +23,74 @@
     var currentTab = 'articles', applyQuotaRemaining = 0, annotationMode = false, currentAnnotationPos = null, currentArticleId = null;
     var currentSkin = 'default';
 
+    // ========== 实时更新系统 ==========
+    var pollInterval = 30000; // 30秒
+    var pollTimer = null;
+    var lastArticleIds = [];
+    var lastPendingCount = -1;
+    var isPolling = false;
+
+    function startPolling() {
+        if (pollTimer) return;
+        updatePollingState();
+        pollTimer = setInterval(checkForUpdates, pollInterval);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    function updatePollingState() {
+        lastArticleIds = articles.map(a => a.id).sort().join(',');
+        if (isAdmin()) {
+            lastPendingCount = pendingApps.length;
+        }
+    }
+
+    async function checkForUpdates() {
+        if (isPolling) return;
+        isPolling = true;
+        try {
+            var oldIds = lastArticleIds;
+            await loadArticles();
+            var newIds = articles.map(a => a.id).sort().join(',');
+            if (newIds !== oldIds) {
+                var newArticles = articles.filter(a => !oldIds.includes(a.id));
+                if (newArticles.length > 0) {
+                    showToast('📢 有 ' + newArticles.length + ' 篇新文章发布！', 'success');
+                } else {
+                    showToast('📝 文章列表已更新', 'success');
+                }
+                if (currentView === 'list') {
+                    renderList();
+                    renderTags();
+                } else if (currentView === 'admin') {
+                    renderAdmin();
+                }
+                updatePollingState();
+            }
+            if (isAdmin()) {
+                var oldPending = lastPendingCount;
+                await loadApplications();
+                if (oldPending !== -1 && pendingApps.length !== oldPending) {
+                    if (pendingApps.length > oldPending) {
+                        showToast('📋 有新的文章待审核', 'warning');
+                    }
+                    $('#pendingCount').textContent = pendingApps.length;
+                    if (currentTab === 'review') renderReview();
+                    lastPendingCount = pendingApps.length;
+                }
+            }
+        } catch (e) {
+            // 静默失败
+        }
+        isPolling = false;
+    }
+    // ========== 实时更新系统结束 ==========
+
     // 权限辅助
     function isAdmin() { return currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner'); }
     function isOwner() { return currentUser && currentUser.role === 'owner'; }
@@ -47,9 +115,8 @@
         currentSkin = skin; localStorage.setItem('blog_skin', skin);
         document.querySelectorAll('.skin-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.skin === skin));
         clearAnnotations(); toggleAnnotationMode(false); updateAnnotateButtonVisibility();
-        // 如果当前在详情页，重新渲染以应用皮肤样式（特别是竹简分页）
         if (currentView === 'detail' && currentArticleId) {
-            viewArticle(currentArticleId); // 重新加载并渲染
+            viewArticle(currentArticleId);
         }
     }
     function clearAnnotations() { document.querySelectorAll('.annotation-tag').forEach(tag => tag.remove()); }
@@ -88,13 +155,34 @@
         if (currentView === 'admin') renderAdmin();
         updateApplyQuota();
     }
-    async function login(u, p) { var data = await apiCall('/api/login', { method: 'POST', body: { username: u, password: p } }); currentUser = { username: data.username, role: data.role }; updateUI(); showToast('欢迎回来，'+data.username); }
-    async function logout() { await apiCall('/api/logout', { method: 'POST' }, true); currentUser = null; updateUI(); showToast('已登出'); switchView('list'); }
+    async function login(u, p) {
+        var data = await apiCall('/api/login', { method: 'POST', body: { username: u, password: p } });
+        currentUser = { username: data.username, role: data.role };
+        updateUI();
+        showToast('欢迎回来，'+data.username);
+        // 重置轮询状态
+        lastArticleIds = '';
+        lastPendingCount = -1;
+        if (isAdmin()) await loadApplications();
+        startPolling();
+    }
+    async function logout() {
+        await apiCall('/api/logout', { method: 'POST' }, true);
+        currentUser = null;
+        updateUI();
+        showToast('已登出');
+        lastArticleIds = '';
+        lastPendingCount = -1;
+        stopPolling();
+        switchView('list');
+    }
     function switchView(v) {
         currentView = v;
         $$('.view').forEach(view => view.classList.remove('active'));
         var target = $('#view' + v.charAt(0).toUpperCase() + v.slice(1)); if (target) target.classList.add('active');
-        if (v === 'list') { renderList(); renderTags(); } else if (v === 'admin') { currentTab = 'articles'; renderAdmin(); }
+        if (v === 'list') { renderList(); renderTags(); startPolling(); }
+        else if (v === 'admin') { currentTab = 'articles'; renderAdmin(); startPolling(); }
+        else if (v === 'detail') { stopPolling(); }
         window.scrollTo({ top: 0 });
     }
 
@@ -119,29 +207,22 @@
 
     function initBambooPagination(container, rawText) {
         if (!container) return;
-        // 移除旧的控制栏（如果有）
         var oldControls = container.parentNode.querySelector('.bamboo-controls');
         if (oldControls) oldControls.remove();
-        // 清除容器内容
         container.innerHTML = '';
 
-        // 计算可用宽度和列数
         var rect = container.getBoundingClientRect();
-        var containerWidth = rect.width - 40; // 减去内边距
-        if (containerWidth < 100) containerWidth = 400; // 保底
+        var containerWidth = rect.width - 40;
+        if (containerWidth < 100) containerWidth = 400;
         var columnMinWidth = 150;
         var columnMaxWidth = 280;
-        // 根据容器宽度计算列数（自适应）
         var columnCount = Math.floor(containerWidth / columnMinWidth);
         if (columnCount < 1) columnCount = 1;
-        // 限制最大列数（避免太碎）
         var maxCols = Math.floor(containerWidth / 120);
         if (columnCount > maxCols) columnCount = maxCols;
-        // 计算实际列宽
         var columnWidth = Math.min(columnMaxWidth, containerWidth / columnCount);
         if (columnWidth < columnMinWidth) columnWidth = columnMinWidth;
 
-        // 分割内容为列（按字符数平均分配）
         var totalChars = rawText.length;
         if (totalChars === 0) rawText = '（空）';
         var charsPerColumn = Math.ceil(totalChars / columnCount);
@@ -151,12 +232,11 @@
             var end = Math.min((i + 1) * charsPerColumn, totalChars);
             var text = rawText.substring(start, end);
             if (text.trim().length === 0 && i < columnCount - 1) {
-                text = '　'; // 占位空白
+                text = '　';
             }
             columns.push(text);
         }
 
-        // 存储所有列数据，用于翻页
         bambooState.columns = columns;
         bambooState.currentPage = 0;
         bambooState.totalPages = Math.ceil(columns.length / columnCount);
@@ -164,7 +244,6 @@
         if (colsPerPage < 1) colsPerPage = 1;
         bambooState.colsPerPage = colsPerPage;
 
-        // 创建翻页容器
         var pageContainer = document.createElement('div');
         pageContainer.className = 'bamboo-page-container';
         pageContainer.style.width = (columns.length * columnWidth) + 'px';
@@ -174,7 +253,6 @@
         pageContainer.style.willChange = 'transform';
         pageContainer.style.height = '100%';
 
-        // 创建每一列
         columns.forEach(function(text, idx) {
             var col = document.createElement('div');
             col.className = 'bamboo-column';
@@ -196,7 +274,6 @@
 
         container.appendChild(pageContainer);
 
-        // 创建控制栏
         var controls = document.createElement('div');
         controls.className = 'bamboo-controls';
         controls.style.display = 'flex';
@@ -212,7 +289,6 @@
             <span class="page-info">${bambooState.currentPage + 1} / ${bambooState.totalPages}</span>
             <button class="bamboo-next" ${bambooState.currentPage >= bambooState.totalPages - 1 ? 'disabled' : ''}>下一卷 ▶</button>
         `;
-        // 样式内联或通过CSS，这里直接内联
         var btns = controls.querySelectorAll('button');
         btns.forEach(function(btn) {
             btn.style.background = 'rgba(60, 40, 20, 0.7)';
@@ -233,7 +309,6 @@
 
         container.parentNode.insertBefore(controls, container.nextSibling);
 
-        // 绑定翻页事件
         controls.querySelector('.bamboo-prev').addEventListener('click', function() {
             if (bambooState.currentPage > 0) {
                 bambooState.currentPage--;
@@ -247,15 +322,12 @@
             }
         });
 
-        // 窗口大小变化时重新计算列宽和分页（防抖）
         var resizeTimer;
         var resizeHandler = function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(function() {
-                // 重新初始化（保留当前页）
                 var current = bambooState.currentPage;
                 initBambooPagination(container, rawText);
-                // 尝试跳转到相近页
                 var newTotal = bambooState.totalPages;
                 if (current >= newTotal) current = newTotal - 1;
                 if (current < 0) current = 0;
@@ -265,9 +337,7 @@
             }, 300);
         };
         window.addEventListener('resize', resizeHandler);
-        // 存储清除函数，避免内存泄漏（可忽略）
 
-        // 应用初始位置
         updateBambooPage(container, pageContainer);
     }
 
@@ -284,7 +354,6 @@
         var translateX = -offset * colWidth;
         pageContainer.style.transform = 'translateX(' + translateX + 'px)';
 
-        // 更新按钮状态和页码
         var controls = container.parentNode.querySelector('.bamboo-controls');
         if (controls) {
             var prevBtn = controls.querySelector('.bamboo-prev');
@@ -318,28 +387,19 @@
     function renderDetail(a) {
         var container = $('#articleDetailContent');
         var raw = a.content || '';
-        // 如果是竹简皮肤，我们不需要渲染HTML，而是使用纯文本分列
-        // 但仍需要标题、元数据，所以先构造基础结构，内容部分由 initBambooPagination 填充
-        // 但为了兼容其他皮肤，我们要保留原渲染方式
         var isBamboo = (currentSkin === 'bamboo');
         var contentHtml = '';
         if (!isBamboo) {
             try { contentHtml = typeof marked !== 'undefined' ? marked.parse(raw) : escapeHtml(raw).replace(/\n/g,'<br>'); } catch(e) { contentHtml = escapeHtml(raw).replace(/\n/g,'<br>'); }
-        } else {
-            // 竹简皮肤下，内容区先留空，稍后由 initBambooPagination 填充
-            contentHtml = '';
         }
-        container.innerHTML = `<div class="detail-halo"></div><div class="detail-header"><h1 class="detail-title">${escapeHtml(a.title)}</h1><div class="detail-meta"><span>📅 ${formatDate(a.createdAt)}</span>${(a.tags||[]).map(t=>`<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}<span class="author-badge" style="margin-left:auto;">${escapeHtml(a.author||'佚名')}</span></div></div><div class="detail-content">${contentHtml}</div><div class="detail-actions"></div><button class="btn btn-sm annotate-btn" id="annotateToggle">🖌️ 朱批</button>`;
+        container.innerHTML = `<div class="detail-header"><h1 class="detail-title">${escapeHtml(a.title)}</h1><div class="detail-meta"><span>📅 ${formatDate(a.createdAt)}</span>${(a.tags||[]).map(t=>`<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}<span class="author-badge" style="margin-left:auto;">${escapeHtml(a.author||'佚名')}</span></div></div><div class="detail-content">${contentHtml}</div><div class="detail-actions"></div><button class="btn btn-sm annotate-btn" id="annotateToggle">🖌️ 朱批</button>`;
 
         var contentEl = container.querySelector('.detail-content');
         if (isBamboo) {
-            // 竹简分页初始化
             initBambooPagination(contentEl, raw);
         } else {
-            // 对于其他皮肤，若之前有残留的控制栏，移除
             var oldControls = container.querySelector('.bamboo-controls');
             if (oldControls) oldControls.remove();
-            // 确保内容正常显示（marked已处理）
         }
 
         var annotateBtn = document.getElementById('annotateToggle');
@@ -347,13 +407,10 @@
 
         if (a.annotations) a.annotations.forEach(ann => addAnnotationTag(ann.x, ann.y, ann.text));
 
-        // 玉玺皮肤装饰
         resetJadeDecorations();
         updateAnnotateButtonVisibility();
 
-        // 数学公式渲染
         try { if (typeof renderMathInElement === 'function') renderMathInElement(container, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); } catch(e) {}
-        // Mermaid
         try { var mn = container.querySelectorAll('.mermaid'); if (mn.length > 0) mermaid.run({ nodes: mn }); } catch(e) {}
 
         if (isAdmin()) {
@@ -375,10 +432,10 @@
         if (!title || !content) return showToast('标题和内容不能为空','error');
         var data = { title, content, summary: $('#articleSummary').value.trim(), tags: $('#articleTags').value.split(',').map(t=>t.trim()).filter(Boolean), seal: $('#articleSeal').value.trim()||'墨', pinned: $('#articlePinned').checked };
         var editId = $('#articleEditId').value;
-        try { if (editId) { await apiCall('/api/articles/'+encodeURIComponent(editId), { method:'PUT', body: data }); showToast('文章已更新'); } else { await apiCall('/api/articles', { method:'POST', body: data }); showToast('文章已发布'); } $('#articleModal').classList.remove('active'); await loadArticles(); if (currentView==='list') { renderList(); renderTags(); } else if (currentView==='admin') renderAdmin(); } catch(e) { showToast('操作失败: '+e.message,'error'); }
+        try { if (editId) { await apiCall('/api/articles/'+encodeURIComponent(editId), { method:'PUT', body: data }); showToast('文章已更新'); } else { await apiCall('/api/articles', { method:'POST', body: data }); showToast('文章已发布'); } $('#articleModal').classList.remove('active'); await loadArticles(); if (currentView==='list') { renderList(); renderTags(); } else if (currentView==='admin') renderAdmin(); updatePollingState(); } catch(e) { showToast('操作失败: '+e.message,'error'); }
     }
     function confirmDel(id, title) { pendingDeleteId = id; $('#confirmModal').classList.add('active'); $('#confirmModal').querySelector('p').textContent = '此操作不可恢复，确定要删除「'+(title||'这篇文章')+'」吗？'; }
-    async function executeDelete() { if (!pendingDeleteId) return; try { await apiCall('/api/articles/'+encodeURIComponent(pendingDeleteId), { method:'DELETE' }); showToast('已删除'); } catch(e) { showToast('删除失败: '+e.message,'error'); } $('#confirmModal').classList.remove('active'); pendingDeleteId = null; await loadArticles(); if (currentView==='list') { renderList(); renderTags(); } else if (currentView==='admin') renderAdmin(); else if (currentView==='detail') switchView('list'); }
+    async function executeDelete() { if (!pendingDeleteId) return; try { await apiCall('/api/articles/'+encodeURIComponent(pendingDeleteId), { method:'DELETE' }); showToast('已删除'); } catch(e) { showToast('删除失败: '+e.message,'error'); } $('#confirmModal').classList.remove('active'); pendingDeleteId = null; await loadArticles(); if (currentView==='list') { renderList(); renderTags(); } else if (currentView==='admin') renderAdmin(); else if (currentView==='detail') switchView('list'); updatePollingState(); }
 
     function renderAdmin() {
         var container = $('#adminArticlesList'), reviewPanel = $('#reviewPanel'), quotaPanel = $('#quotaPanel');
@@ -391,8 +448,8 @@
     function renderReview() { var container = $('#reviewList'); if (!pendingApps.length) { container.innerHTML = '<p>暂无待审核文章</p>'; return; } container.innerHTML = pendingApps.map(a => `<div class="article-manage-item" style="display:flex;justify-content:space-between;padding:0.7rem 0;border-bottom:1px dashed rgba(250,219,95,0.25);"><div><span>${escapeHtml(a.title)}</span><span style="font-size:0.75rem;">${formatDate(a.createdAt)} by ${escapeHtml(a.applicant)}</span></div><div><button class="btn btn-sm approve-btn" data-id="${escapeHtml(a.id)}">✅ 通过</button><button class="btn btn-sm btn-danger reject-btn" data-id="${escapeHtml(a.id)}">❌ 拒绝</button></div></div>`).join(''); container.onclick = e => { var id = e.target.dataset.id; if (e.target.classList.contains('approve-btn')) approveApplication(id); else if (e.target.classList.contains('reject-btn')) rejectApplication(id); }; }
     async function renderQuota() { var container = $('#quotaList'); try { var data = await apiCall('/api/apply-quota/all'); if (!data || !data.length) { container.innerHTML = '<p>暂无用户数据</p>'; return; } container.innerHTML = data.map(u => `<div class="article-manage-item" style="display:flex;justify-content:space-between;padding:0.7rem 0;border-bottom:1px dashed rgba(250,219,95,0.25);"><div><span>${escapeHtml(u.username)}</span><span style="font-size:0.75rem;">今日已用 ${u.used}/${u.limit}次</span></div><div><button class="btn btn-sm reset-quota-btn" data-username="${escapeHtml(u.username)}">🔄重置</button></div></div>`).join(''); container.onclick = e => { if (e.target.classList.contains('reset-quota-btn')) { var un = e.target.dataset.username; if (confirm('重置' + un + '的申请次数？')) resetUserQuota(un); } }; } catch (e) { container.innerHTML = '<p>加载失败</p>'; } }
     async function resetUserQuota(un) { try { await apiCall('/api/apply-quota/reset/' + encodeURIComponent(un), { method: 'POST' }); showToast('已重置'); renderQuota(); if (currentUser && currentUser.username === un) updateApplyQuota(); } catch(e) { showToast('重置失败','error'); } }
-    async function approveApplication(id) { try { await apiCall('/api/article-applications/' + id + '/approve', { method: 'POST' }); showToast('已批准并发布'); } catch(e) { showToast('操作失败','error'); } await loadApplications(); await loadArticles(); if (currentView === 'list') { renderList(); renderTags(); } }
-    async function rejectApplication(id) { try { await apiCall('/api/article-applications/' + id, { method: 'DELETE' }); showToast('已拒绝'); } catch(e) { showToast('操作失败','error'); } await loadApplications(); }
+    async function approveApplication(id) { try { await apiCall('/api/article-applications/' + id + '/approve', { method: 'POST' }); showToast('已批准并发布'); } catch(e) { showToast('操作失败','error'); } await loadApplications(); await loadArticles(); if (currentView === 'list') { renderList(); renderTags(); } updatePollingState(); }
+    async function rejectApplication(id) { try { await apiCall('/api/article-applications/' + id, { method: 'DELETE' }); showToast('已拒绝'); } catch(e) { showToast('操作失败','error'); } await loadApplications(); updatePollingState(); }
 
     function initMdImport() {
         var ib = document.getElementById('importMdBtn'), fi = document.getElementById('mdFileInput');
@@ -487,6 +544,7 @@
         initRipples(); initParticles(); initTrail(); initBurst(); initConstellations();
         initMdImport(); initStylePanel(); bindEvents();
         await loadArticles(); await checkLogin(); renderList(); renderTags();
+        startPolling(); // 启动实时更新
     }
     init();
 })();
