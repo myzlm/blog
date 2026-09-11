@@ -1,67 +1,68 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>墨韵·云笺 | 古风科技博客</title>
-    <!-- 库依赖 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css">
-    <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-    <!-- 自定义样式 -->
-    <link rel="stylesheet" href="style.css">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>墨韵·云笺 | 古风科技博客</title>
+ <!-- 库依赖 -->
+ <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script> 
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+ <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css">
+ <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+ <script src="https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+ <!-- 自定义样式 -->
+ <link rel="stylesheet" href="style.css">
 </head>
 <body class="skin-default">
 
-    <div class="scanlines"></div>
-    <canvas id="particleCanvas"></canvas>
-    <canvas id="rippleCanvas"></canvas>
-    <canvas id="trailCanvas"></canvas>
-    <div class="poem-float" id="poemFloat">☯ 且将新火试新茶，诗酒趁年华 ☯</div>
-    <div id="toastContainer"></div>
-    <div id="backToTop">⬆</div>
+ <div class="scanlines"></div>
+ <canvas id="particleCanvas"></canvas>
+ <canvas id="rippleCanvas"></canvas>
+ <canvas id="trailCanvas"></canvas>
+ <div class="poem-float" id="poemFloat">☯ 且将新火试新茶，诗酒趁年华 ☯</div>
+ <div id="toastContainer"></div>
+ <div id="backToTop">⬆</div>
 
-    <div class="style-panel" id="stylePanel">
-        <button class="btn skin-btn active" data-skin="default">原版</button>
-        <button class="btn skin-btn" data-skin="bamboo">竹简</button>
-        <button class="btn skin-btn" data-skin="jade">传国玉玺</button>
-    </div>
+ <div class="style-panel" id="stylePanel">
+ <button class="btn skin-btn active" data-skin="default">原版</button>
+ <button class="btn skin-btn" data-skin="bamboo">竹简</button>
+ <button class="btn skin-btn" data-skin="jade">传国玉玺</button>
+ </div>
 
-    <div class="main-container">
-        <header class="header">
-            <div class="plaque"><h1 class="plaque-title">墨韵·云笺</h1></div>
-            <p class="subtitle">✦ 古风为骨 · 科技为翼 ✦</p>
-            <div class="user-area" id="userArea">
-                <span class="greeting" id="greetingText">未登录·过客</span>
-                <button class="btn" id="loginBtn">🔑 登 录</button>
-                <button class="btn admin-btn hidden" id="adminPanelBtn">⚙️ 管理</button>
-                <button class="btn hidden" id="logoutBtn">🚪 登 出</button>
-            </div>
-        </header>
+ <div class="main-container">
+ <header class="header">
+ <div class="plaque"><h1 class="plaque-title">墨韵·云笺</h1></div>
+ <p class="subtitle">✦ 古风为骨 · 科技为翼 ✦</p>
+ <div class="user-area" id="userArea">
+ <span class="greeting" id="greetingText">未登录·过客</span>
+ <button class="btn" id="loginBtn">🔑 登 录</button>
+ <button class="btn admin-btn hidden" id="adminPanelBtn">⚙️ 管理</button>
+ <button class="btn hidden" id="logoutBtn">🚪 登 出</button>
+ </div>
+ </header>
 
-        <div class="view active" id="viewList">
-            <div class="toolbar" style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
-                <input type="text" class="search-box" id="searchInput" placeholder="搜索文章..." style="flex:1;min-width:200px;padding:0.5rem 1rem;background:rgba(30,28,38,0.8);backdrop-filter:blur(10px);border:1px solid var(--border-subtle);border-radius:24px;color:var(--text-primary);outline:none;">
-                <div class="tag-filter" id="tagFilter"></div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;">
-                <button class="btn primary-btn hidden" id="applyArticleBtn">📝 申请发表</button>
-                <span id="applyQuota" class="quota-tip hidden" style="font-size:0.8rem;color:var(--cyan-neon);margin-left:0.5rem;"></span>
-                <button class="btn primary-btn hidden" id="newArticleBtn">📝 撰写新篇</button>
-            </div>
-            <div class="articles-grid" id="articlesGrid"></div>
-            <div class="empty-state hidden" id="emptyState" style="text-align:center;padding:3rem;color:var(--text-muted);"><span style="font-size:3rem;">📜</span><br>尚无文章，静待墨香</div>
-        </div>
+ <div class="view active" id="viewList">
+ <div class="toolbar" style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
+ <input type="text" class="search-box" id="searchInput" placeholder="搜索文章..." style="flex:1;min-width:200px;padding:0.5rem 1rem;background:rgba(30,28,38,0.8);backdrop-filter:blur(10px);border:1px solid var(--border-subtle);border-radius:24px;color:var(--text-primary);outline:none;">
+ <div class="tag-filter" id="tagFilter"></div>
+ </div>
+ <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.5rem;">
+ <button class="btn primary-btn hidden" id="applyArticleBtn">📝 申请发表</button>
+ <span id="applyQuota" class="quota-tip hidden" style="font-size:0.8rem;color:var(--cyan-neon);margin-left:0.5rem;"></span>
+ <button class="btn primary-btn hidden" id="newArticleBtn">📝 撰写新篇</button>
+ </div>
+ <div class="articles-grid" id="articlesGrid"></div>
+ <div class="empty-state hidden" id="emptyState" style="text-align:center;padding:3rem;color:var(--text-muted);"><span style="font-size:3rem;">📜</span><br>尚无文章，静待墨香</div>
+ </div>
 
-        <div class="view" id="viewDetail">
-            <button class="btn" id="backToListBtn" style="margin-bottom:1rem;">← 返回卷库</button>
-            <div class="article-detail" id="articleDetailContent">
-                <div class="detail-halo"></div>
-                <button class="btn btn-sm annotate-btn" id="annotateToggle">🖌️ 朱批</button>
+ <div class="view" id="viewDetail">
+ <button class="btn" id="backToListBtn" style="margin-bottom:1rem;">← 返回卷库</button>
+ <div class="article-detail" id="articleDetailContent">
+ <div class="detail-halo"></div>
+ <button class="btn btn-sm annotate-btn" id="annotateToggle">🖌️ 朱批</button>
             </div>
         </div>
 
