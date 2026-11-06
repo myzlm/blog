@@ -69,7 +69,6 @@ body {
     overflow-x: hidden;
     position: relative;
     line-height: 1.7;
-    cursor: none;
 }
 
 body::before {
@@ -995,4 +994,25 @@ body::before {
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--gold) rgba(0, 0, 0, 0.2);
+}
+
+/* ===== 无障碍：用户偏好减少动效时关闭装饰动画 ===== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    #particleCanvas,
+    #rippleCanvas,
+    #trailCanvas {
+        display: none;
+    }
+
+    .scanlines {
+        display: none;
+    }
 }

@@ -2,6 +2,7 @@
   var API_BASE = 'https://myzlm.serveousercontent.com';
   var $ = function(s) { return document.querySelector(s); };
   var $$ = function(s) { return document.querySelectorAll(s); };
+  var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ========== CSRF ==========
   var csrfToken = '';
@@ -77,6 +78,7 @@
   // ========== 状态 ==========
   var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null;
   var currentTab = 'articles', applyQuotaRemaining = 0, annotationMode = false, currentAnnotationPos = null, currentArticleId = null;
+  var currentArticle = null; // 详情页当前文章的完整数据（供朱批保存使用，避免用列表缓存覆盖）
   var currentSkin = 'default';
 
   // ========== 轮询 ==========
@@ -99,11 +101,11 @@
     if (isAdmin()) lastPendingCount = pendingApps.length;
   }
   async function checkForUpdates() {
-    if (isPolling) return;
+    if (isPolling || document.hidden) return; // 页面隐藏时暂停轮询，节省资源
     isPolling = true;
     try {
       var oldIds = lastArticleIds;
-      await loadArticles();
+      await loadArticles(true);
       var newIds = articles.map(a => a.id).sort().join(',');
       if (newIds !== oldIds) {
         var newArticles = articles.filter(a => !oldIds.includes(a.id));
@@ -263,6 +265,7 @@
   }
   async function login(u, p) {
     var data = await apiCall('/api/login', { method: 'POST', body: { username: u, password: p } });
+    if (!data || !data.username) throw new Error('服务端响应异常，请稍后重试');
     csrfToken = data.csrfToken || '';
     currentUser = { username: data.username, role: data.role, mustChangePassword: data.mustChangePassword };
     updateUI();
@@ -296,9 +299,12 @@
   }
 
   // ========== 数据加载 ==========
-  async function loadArticles() {
+  async function loadArticles(silent) {
     try { var data = await apiCall('/api/articles'); articles = Array.isArray(data) ? data : []; }
-    catch (e) { articles = []; }
+    catch (e) {
+      articles = [];
+      if (!silent) showToast('加载文章失败，请检查网络连接', 'error');
+    }
     articles.sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt)-new Date(a.createdAt));
   }
   async function loadApplications() {
@@ -478,8 +484,10 @@
       if (bambooState.currentPage < bambooState.totalPages - 1) { bambooState.currentPage++; updateBambooPage(container, pageContainer); }
     });
 
+    // 防止重复注册 resize 监听器导致内存泄漏
+    if (container._bambooResizeHandler) window.removeEventListener('resize', container._bambooResizeHandler);
     var resizeTimer;
-    window.addEventListener('resize', function() {
+    container._bambooResizeHandler = function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
         var current = bambooState.currentPage;
@@ -491,7 +499,8 @@
         var newPageContainer = container.querySelector('.bamboo-page-container');
         if (newPageContainer) updateBambooPage(container, newPageContainer);
       }, 300);
-    });
+    };
+    window.addEventListener('resize', container._bambooResizeHandler);
 
     updateBambooPage(container, pageContainer);
   }
@@ -524,9 +533,10 @@
     try {
       var a = await apiCall('/api/articles/'+encodeURIComponent(id));
       if (!a) { showToast('文章不存在','error'); return; }
-      renderDetail(a);
-      switchView('detail');
+      currentArticle = a;          // 缓存详情接口返回的最新数据
       currentArticleId = id;
+      switchView('detail');        // 先切换视图，确保容器可见后再测量宽度（竹简分栏依赖真实宽度）
+      renderDetail(a);
     } catch(e) { showToast('加载失败: '+e.message,'error'); }
   }
 
@@ -681,7 +691,7 @@
           <div><span>${escapeHtml(a.title)}</span><span style="font-size:0.75rem;color:var(--text-muted);">${formatDate(a.createdAt)} by ${escapeHtml(a.author||'佚名')}</span></div>
           <div>
             <button class="btn btn-sm edit-btn" data-id="${escapeHtml(a.id)}">✏️</button>
-            <button class="btn btn-sm btn-danger delete-btn" data-id="${escapeHtml(a.id)}">🗑️</button>
+            <button class="btn btn-sm btn-danger delete-btn" data-id="${escapeHtml(a.id)}" data-title="${escapeHtml(a.title||'')}">🗑️</button>
           </div>
         </div>`).join('');
       container.onclick = e => {
@@ -786,72 +796,20 @@
       if (trail.length > 40) trail.shift();
     });
     function animate() {
-      ctx.clearRect(0, 0, w, h);
-      for (var i = trail.length - 1; i >= 0; i--) {
-        var p = trail[i];
-        p.life -= 0.025; p.size *= 0.97;
-        if (p.life <= 0) { trail.splice(i, 1); continue; }
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fillStyle = p.color + p.life + ')'; ctx.fill();
-        ctx.shadowBlur = 12; ctx.shadowColor = p.color + '0.6)'; ctx.fill(); ctx.shadowBlur = 0;
+      if (!document.hidden) {
+        ctx.clearRect(0, 0, w, h);
+        for (var i = trail.length - 1; i >= 0; i--) {
+          var p = trail[i];
+          p.life -= 0.025; p.size *= 0.97;
+          if (p.life <= 0) { trail.splice(i, 1); continue; }
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+          ctx.fillStyle = p.color + p.life + ')'; ctx.fill();
+          ctx.shadowBlur = 12; ctx.shadowColor = p.color + '0.6)'; ctx.fill(); ctx.shadowBlur = 0;
+        }
       }
       requestAnimationFrame(animate);
     }
     animate();
-  }
-  function initBurst() {
-    var canvas = document.getElementById('rippleCanvas'), ctx = canvas.getContext('2d'), bursts = [];
-    document.addEventListener('click', function(e) {
-      var count = 15 + Math.floor(Math.random() * 20);
-      for (var i = 0; i < count; i++) {
-        var angle = Math.random() * Math.PI * 2;
-        var speed = 2 + Math.random() * 6;
-        bursts.push({
-          x: e.clientX, y: e.clientY,
-          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-          life: 1, size: 1 + Math.random() * 3,
-          color: ['#fadb5f', '#ff6b6b', '#7df9ff', '#c08eff'][Math.floor(Math.random() * 4)]
-        });
-      }
-      if (bursts.length > 200) bursts.splice(0, bursts.length - 200);
-    });
-    function drawBursts() {
-      for (var i = bursts.length - 1; i >= 0; i--) {
-        var b = bursts[i];
-        b.x += b.vx; b.y += b.vy; b.vy += 0.05; b.life -= 0.02;
-        if (b.life <= 0) { bursts.splice(i, 1); continue; }
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2);
-        if (b.color.startsWith('#')) ctx.fillStyle = b.color + Math.floor(b.life * 255).toString(16).padStart(2, '0');
-        ctx.fill();
-      }
-    }
-    setInterval(drawBursts, 33);
-  }
-  function initConstellations() {
-    var canvas = document.getElementById('particleCanvas'), ctx = canvas.getContext('2d'), stars = [], w, h;
-    function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
-    window.addEventListener('resize', resize); resize();
-    for (var i = 0; i < 40; i++) stars.push({ x: Math.random() * w, y: Math.random() * h, size: 0.5 + Math.random() * 1.5, twinkle: Math.random() * Math.PI * 2 });
-    function drawStars() {
-      ctx.clearRect(0, 0, w, h);
-      for (var i = 0; i < stars.length; i++) {
-        var s = stars[i]; s.twinkle += 0.02;
-        var alpha = 0.3 + Math.sin(s.twinkle) * 0.3;
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')'; ctx.fill();
-        for (var j = i + 1; j < stars.length; j++) {
-          var s2 = stars[j];
-          var dx = s.x - s2.x, dy = s.y - s2.y;
-          var dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 150) {
-            ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s2.x, s2.y);
-            ctx.strokeStyle = 'rgba(250,219,95,' + (0.15 * (1 - dist/150)) + ')';
-            ctx.lineWidth = 0.5; ctx.stroke();
-          }
-        }
-      }
-    }
-    setInterval(drawStars, 100);
   }
   function apply3DTilt() {
     document.querySelectorAll('.article-card').forEach(function(card) {
@@ -868,42 +826,68 @@
       });
     });
   }
+  // 涟漪 + 点击迸发粒子（共用 rippleCanvas，单一 rAF 循环避免互相清除）
   function initRipples() {
-    var canvas = document.getElementById('rippleCanvas'), ctx = canvas.getContext('2d'), w, h, ripples = [];
+    var canvas = document.getElementById('rippleCanvas'), ctx = canvas.getContext('2d'), w, h, ripples = [], bursts = [];
     function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
     window.addEventListener('resize', resize); resize();
+    var burstColors = ['#fadb5f', '#ff6b6b', '#7df9ff', '#c08eff'];
     document.addEventListener('click', function(e) {
-      var colors = ['rgba(250,219,95,0.8)', 'rgba(255,107,107,0.7)', 'rgba(125,249,255,0.6)', 'rgba(200,180,140,0.7)'];
+      var rippleColors = ['rgba(250,219,95,0.8)', 'rgba(255,107,107,0.7)', 'rgba(125,249,255,0.6)', 'rgba(200,180,140,0.7)'];
       ripples.push({
         x: e.clientX, y: e.clientY, radius: 5,
         maxRadius: 60 + Math.random() * 60,
         opacity: 0.8,
-        color: colors[Math.floor(Math.random() * colors.length)],
+        color: rippleColors[Math.floor(Math.random() * rippleColors.length)],
         speed: 1.2 + Math.random() * 0.8
       });
       if (ripples.length > 20) ripples.shift();
+      var count = 15 + Math.floor(Math.random() * 20);
+      for (var i = 0; i < count; i++) {
+        var angle = Math.random() * Math.PI * 2;
+        var speed = 2 + Math.random() * 6;
+        bursts.push({
+          x: e.clientX, y: e.clientY,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          life: 1, size: 1 + Math.random() * 3,
+          color: burstColors[Math.floor(Math.random() * burstColors.length)]
+        });
+      }
+      if (bursts.length > 200) bursts.splice(0, bursts.length - 200);
     });
     function animate() {
-      ctx.clearRect(0, 0, w, h);
-      for (var i = ripples.length - 1; i >= 0; i--) {
-        var r = ripples[i];
-        r.radius += r.speed; r.opacity -= 0.015;
-        if (r.opacity <= 0 || r.radius > r.maxRadius) { ripples.splice(i, 1); }
-        else {
-          ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2);
-          var g = ctx.createRadialGradient(r.x, r.y, r.radius * 0.2, r.x, r.y, r.radius);
-          g.addColorStop(0, r.color); g.addColorStop(1, 'transparent');
-          ctx.fillStyle = g; ctx.globalAlpha = r.opacity; ctx.fill(); ctx.globalAlpha = 1;
+      if (!document.hidden) {
+        ctx.clearRect(0, 0, w, h);
+        for (var i = ripples.length - 1; i >= 0; i--) {
+          var r = ripples[i];
+          r.radius += r.speed; r.opacity -= 0.015;
+          if (r.opacity <= 0 || r.radius > r.maxRadius) { ripples.splice(i, 1); }
+          else {
+            ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2);
+            var g = ctx.createRadialGradient(r.x, r.y, r.radius * 0.2, r.x, r.y, r.radius);
+            g.addColorStop(0, r.color); g.addColorStop(1, 'transparent');
+            ctx.fillStyle = g; ctx.globalAlpha = r.opacity; ctx.fill(); ctx.globalAlpha = 1;
+          }
+        }
+        for (var j = bursts.length - 1; j >= 0; j--) {
+          var b = bursts[j];
+          b.x += b.vx; b.y += b.vy; b.vy += 0.05; b.life -= 0.02;
+          if (b.life <= 0) { bursts.splice(j, 1); continue; }
+          ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2);
+          ctx.fillStyle = b.color + Math.floor(b.life * 255).toString(16).padStart(2, '0');
+          ctx.fill();
         }
       }
       requestAnimationFrame(animate);
     }
     animate();
   }
+  // 飘落粒子 + 星座连线（共用 particleCanvas，单一 rAF 循环）
   function initParticles() {
-    var canvas = document.getElementById('particleCanvas'), ctx = canvas.getContext('2d'), w, h, particles = [];
+    var canvas = document.getElementById('particleCanvas'), ctx = canvas.getContext('2d'), w, h, particles = [], stars = [];
     function resize() { w = window.innerWidth; h = window.innerHeight; canvas.width = w; canvas.height = h; }
     window.addEventListener('resize', resize); resize();
+    for (var si = 0; si < 40; si++) stars.push({ x: Math.random() * w, y: Math.random() * h, size: 0.5 + Math.random() * 1.5, twinkle: Math.random() * Math.PI * 2 });
     function Particle() { this.reset(true); }
     Particle.prototype.reset = function(init) {
       this.x = Math.random() * w;
@@ -942,8 +926,28 @@
     };
     for (var i = 0; i < 80; i++) particles.push(new Particle());
     function animate() {
-      ctx.clearRect(0, 0, w, h);
-      for (var i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(ctx); }
+      if (!document.hidden) {
+        ctx.clearRect(0, 0, w, h);
+        // 星空 + 连线
+        for (var s = 0; s < stars.length; s++) {
+          var st = stars[s]; st.twinkle += 0.02;
+          var alpha = 0.3 + Math.sin(st.twinkle) * 0.3;
+          ctx.beginPath(); ctx.arc(st.x, st.y, st.size, 0, Math.PI*2);
+          ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')'; ctx.fill();
+          for (var j = s + 1; j < stars.length; j++) {
+            var s2 = stars[j];
+            var dx = st.x - s2.x, dy = st.y - s2.y;
+            var dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 150) {
+              ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.lineTo(s2.x, s2.y);
+              ctx.strokeStyle = 'rgba(250,219,95,' + (0.15 * (1 - dist/150)) + ')';
+              ctx.lineWidth = 0.5; ctx.stroke();
+            }
+          }
+        }
+        // 飘落粒子
+        for (var p = 0; p < particles.length; p++) { particles[p].update(); particles[p].draw(ctx); }
+      }
       requestAnimationFrame(animate);
     }
     animate();
@@ -1032,7 +1036,10 @@
       submitAnnotationBtn.addEventListener('click', async function() {
         var text = $('#annotationText').value.trim();
         if (!text || !currentArticleId) return;
-        var article = articles.find(a => a.id === currentArticleId);
+        // 使用详情接口返回的最新文章数据，避免以列表缓存覆盖服务端内容
+        var article = currentArticle && currentArticle.id === currentArticleId
+          ? currentArticle
+          : articles.find(a => a.id === currentArticleId);
         if (!article) return;
         if (!article.annotations) article.annotations = [];
         if (!currentAnnotationPos) { showToast('请先在正文中点击位置', 'error'); return; }
@@ -1091,7 +1098,10 @@
 
   // ========== 初始化 ==========
   async function init() {
-    initRipples(); initParticles(); initTrail(); initBurst(); initConstellations();
+    if (!reducedMotion) {
+      // 用户偏好减少动效时跳过全部画布特效
+      initRipples(); initParticles(); initTrail();
+    }
     initMdImport(); initStylePanel(); bindEvents();
     await loadArticles();
     await checkLogin();
