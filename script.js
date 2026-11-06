@@ -230,7 +230,9 @@
     annCanvas = detail.querySelector('.ann-canvas');
     annLayerEl = detail.querySelector('.ann-layer');
     if (!annCanvas || !annLayerEl) return;
-    if (!annCtx) annCtx = annCanvas.getContext('2d');
+    // renderDetail 每次都会重建 DOM：画布是新元素，context 必须重新获取，
+    // 否则 annCtx 仍绑定在已分离的旧画布上，绘制全部不可见
+    annCtx = annCanvas.getContext('2d');
     if (currentArticle && currentArticle.id === currentArticleId) {
       if (!currentArticle.annotations) currentArticle.annotations = [];
       annAnnotations = currentArticle.annotations;
@@ -425,16 +427,19 @@
 
   function saveAnnotations() {
     if (!isLoggedIn() || !currentArticle || !currentArticleId) return;
+    // 捕获当时的文章与 id，避免防抖期间切换文章导致张冠李戴
+    var savedId = currentArticleId;
+    var savedArticle = currentArticle;
     clearTimeout(annSaveTimer);
     annSaveTimer = setTimeout(async function() {
       try {
-        await apiCall('/api/articles/' + encodeURIComponent(currentArticleId), {
+        await apiCall('/api/articles/' + encodeURIComponent(savedId), {
           method: 'PUT',
           body: {
-            title: currentArticle.title, content: currentArticle.content,
-            summary: currentArticle.summary, tags: currentArticle.tags,
-            seal: currentArticle.seal, pinned: currentArticle.pinned,
-            annotations: currentArticle.annotations
+            title: savedArticle.title, content: savedArticle.content,
+            summary: savedArticle.summary, tags: savedArticle.tags,
+            seal: savedArticle.seal, pinned: savedArticle.pinned,
+            annotations: savedArticle.annotations
           }
         });
       } catch (e) { showToast('朱批保存失败: ' + e.message, 'error'); }
@@ -858,10 +863,8 @@
     if (annotateBtn) annotateBtn.addEventListener('click', () => toggleAnnotationMode());
     bindAnnotationUI(container);
 
-    if (a.annotations) {
-      // 读者视角：朱批始终可见（画布覆盖层，pointer-events 关闭）
-      ensureAnnCanvas();
-    }
+    // 无论文章是否已有朱批，都初始化画布（读者可见朱批，作者可进入批注模式）
+    ensureAnnCanvas();
 
     resetJadeDecorations();
     updateAnnotateButtonVisibility();

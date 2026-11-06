@@ -838,6 +838,10 @@ body::before {
 }
 
 /* ===== 竹简皮肤修复 ===== */
+/* 批注模式下画布层 z-index 12，翻页按钮需在其上才可点击 */
+.skin-bamboo .bamboo-controls {
+    z-index: 13;
+}
 /* 隐藏列内滚动条（分字已按容量估算，正常无需滚动） */
 .skin-bamboo .bamboo-column::-webkit-scrollbar {
     display: none;
