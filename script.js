@@ -77,7 +77,14 @@
 
   // ========== 状态 ==========
   var currentUser = null, articles = [], pendingApps = [], currentView = 'list', pendingDeleteId = null, activeTag = null;
-  var currentTab = 'articles', applyQuotaRemaining = 0, annotationMode = false, currentAnnotationPos = null, currentArticleId = null;
+  var currentTab = 'articles', applyQuotaRemaining = 0, annotationMode = false, currentArticleId = null;
+  // 朱批（画布批注系统，参照 md 编辑器）
+  var annAnnotations = [];   // 引用 currentArticle.annotations
+  var annCanvas = null, annLayerEl = null, annCtx = null, annW = 0, annH = 0;
+  var annTool = 'pen', annColor = '#ff6b6b', annSize = 2;
+  var annDrawing = false, annPointerDown = false, annLastX = 0, annLastY = 0;
+  var annSelected = -1, annDragX = 0, annDragY = 0;
+  var annSaveTimer = null;
   var currentArticle = null; // 详情页当前文章的完整数据（供朱批保存使用，避免用列表缓存覆盖）
   var currentSkin = 'default';
 
@@ -192,12 +199,276 @@
     currentSkin = skin;
     localStorage.setItem('blog_skin', skin);
     document.querySelectorAll('.skin-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.skin === skin));
-    clearAnnotations();
     toggleAnnotationMode(false);
     updateAnnotateButtonVisibility();
     if (currentView === 'detail' && currentArticleId) viewArticle(currentArticleId);
   }
-  function clearAnnotations() { document.querySelectorAll('.annotation-tag').forEach(tag => tag.remove()); }
+  // ========== 朱批（画布批注系统，参照 md 编辑器） ==========
+  function getDetailRect() {
+    var c = $('#articleDetailContent');
+    return c ? c.getBoundingClientRect() : { width: 0, height: 0 };
+  }
+
+  // 兼容旧版 {x, y(百分比), text} 格式：一次性换算为像素坐标
+  function migrateLegacyAnnotations() {
+    var rect = getDetailRect();
+    if (!rect.width) return;
+    annAnnotations.forEach(function(ann) {
+      if (!ann.type) {
+        ann.type = 'text';
+        ann.x = (ann.x / 100) * rect.width;
+        ann.y = (ann.y / 100) * rect.height;
+        ann.color = ann.color || '#ff6b6b';
+        ann.size = ann.size || 2;
+      }
+    });
+  }
+
+  function ensureAnnCanvas() {
+    var detail = $('#articleDetailContent');
+    if (!detail) return;
+    annCanvas = detail.querySelector('.ann-canvas');
+    annLayerEl = detail.querySelector('.ann-layer');
+    if (!annCanvas || !annLayerEl) return;
+    if (!annCtx) annCtx = annCanvas.getContext('2d');
+    if (currentArticle && currentArticle.id === currentArticleId) {
+      if (!currentArticle.annotations) currentArticle.annotations = [];
+      annAnnotations = currentArticle.annotations;
+    }
+    resizeAnnCanvas();
+  }
+
+  function resizeAnnCanvas() {
+    if (!annCtx || !annCanvas) return;
+    var rect = getDetailRect();
+    var dpr = window.devicePixelRatio || 1;
+    annW = rect.width; annH = rect.height;
+    annCanvas.width = annW * dpr;
+    annCanvas.height = annH * dpr;
+    annCanvas.style.width = annW + 'px';
+    annCanvas.style.height = annH + 'px';
+    // setTransform 重置矩阵，避免多次 resize 后 scale 累积
+    annCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    redrawAnnotations();
+  }
+
+  function getAnnBounds(ann) {
+    if (ann.type === 'path') {
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      ann.points.forEach(function(p) {
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+      });
+      return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+    }
+    if (ann.type === 'text') {
+      if (annCtx) annCtx.font = (ann.size * 6) + 'px "Ma Shan Zheng", KaiTi, serif';
+      var w = annCtx ? annCtx.measureText(ann.text).width : 60;
+      return { x: ann.x, y: ann.y - 12, w: w, h: 20 };
+    }
+    return { x: 0, y: 0, w: 0, h: 0 };
+  }
+
+  function redrawAnnotations() {
+    if (!annCtx) return;
+    migrateLegacyAnnotations();
+    annCtx.clearRect(0, 0, annW, annH);
+    // 竹简皮肤下只显示当前卷的朱批
+    var page = (currentSkin === 'bamboo') ? bambooState.currentPage : null;
+    annAnnotations.forEach(function(ann, index) {
+      if (page !== null && ann.page !== undefined && ann.page !== page) return;
+      if (ann.type === 'path') {
+        annCtx.beginPath();
+        annCtx.strokeStyle = ann.color;
+        annCtx.lineWidth = ann.size;
+        annCtx.lineCap = 'round';
+        annCtx.lineJoin = 'round';
+        ann.points.forEach(function(p, i) {
+          if (i === 0) annCtx.moveTo(p.x, p.y);
+          else annCtx.lineTo(p.x, p.y);
+        });
+        annCtx.stroke();
+      } else if (ann.type === 'text') {
+        annCtx.font = (ann.size * 6) + 'px "Ma Shan Zheng", KaiTi, serif';
+        annCtx.fillStyle = ann.color;
+        annCtx.fillText(ann.text, ann.x, ann.y);
+      }
+      if (index === annSelected && annTool === 'select') {
+        var bbox = getAnnBounds(ann);
+        annCtx.strokeStyle = '#fadb5f';
+        annCtx.lineWidth = 1.5;
+        annCtx.setLineDash([4, 4]);
+        annCtx.strokeRect(bbox.x - 5, bbox.y - 5, bbox.w + 10, bbox.h + 10);
+        annCtx.setLineDash([]);
+      }
+    });
+  }
+
+  function setAnnTool(tool) {
+    annTool = tool;
+    $$('.ann-tool[data-tool]').forEach(function(b) { b.classList.toggle('active', b.dataset.tool === tool); });
+    if (annLayerEl) annLayerEl.style.cursor = tool === 'select' ? 'grab' : (tool === 'delete' ? 'pointer' : 'crosshair');
+    annSelected = -1;
+    redrawAnnotations();
+  }
+
+  function getAnnCoords(e) {
+    var rect = annCanvas.getBoundingClientRect();
+    var cx = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX);
+    var cy = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] && e.touches[0].clientY);
+    return { x: cx - rect.left, y: cy - rect.top };
+  }
+
+  function annOnDown(e) {
+    if (!annotationMode) return;
+    var pos = getAnnCoords(e);
+    annPointerDown = true;
+    if (annTool === 'pen') {
+      annDrawing = true;
+      annLastX = pos.x; annLastY = pos.y;
+      annAnnotations.push({
+        type: 'path', color: annColor, size: annSize,
+        points: [{ x: pos.x, y: pos.y }],
+        page: currentSkin === 'bamboo' ? bambooState.currentPage : undefined
+      });
+      annSelected = annAnnotations.length - 1;
+      redrawAnnotations();
+    } else if (annTool === 'text') {
+      var input = $('#annTextInput');
+      if (input) { input.value = ''; input.dataset.x = pos.x; input.dataset.y = pos.y; input.style.display = 'block'; input.focus(); }
+    } else if (annTool === 'select') {
+      var found = -1;
+      for (var i = annAnnotations.length - 1; i >= 0; i--) {
+        var bbox = getAnnBounds(annAnnotations[i]);
+        if (pos.x >= bbox.x - 5 && pos.x <= bbox.x + bbox.w + 5 && pos.y >= bbox.y - 5 && pos.y <= bbox.y + bbox.h + 5) { found = i; break; }
+      }
+      if (found !== -1) {
+        annSelected = found;
+        annLayerEl.style.cursor = 'grabbing';
+        var b2 = getAnnBounds(annAnnotations[found]);
+        annDragX = pos.x - b2.x; annDragY = pos.y - b2.y;
+        redrawAnnotations();
+      } else { annSelected = -1; redrawAnnotations(); }
+    } else if (annTool === 'delete') {
+      for (var j = annAnnotations.length - 1; j >= 0; j--) {
+        var bb = getAnnBounds(annAnnotations[j]);
+        if (pos.x >= bb.x - 5 && pos.x <= bb.x + bb.w + 5 && pos.y >= bb.y - 5 && pos.y <= bb.y + bb.h + 5) {
+          annAnnotations.splice(j, 1);
+          annSelected = -1;
+          redrawAnnotations();
+          saveAnnotations();
+          showToast('朱批已勾销');
+          break;
+        }
+      }
+    }
+  }
+
+  function annOnMove(e) {
+    if (!annotationMode || !annPointerDown) return;
+    var pos = getAnnCoords(e);
+    if (annTool === 'pen' && annDrawing) {
+      var last = annAnnotations[annAnnotations.length - 1];
+      if (last && last.type === 'path') {
+        last.points.push({ x: pos.x, y: pos.y });
+        redrawAnnotations();
+      }
+    } else if (annTool === 'select' && annSelected !== -1) {
+      var ann = annAnnotations[annSelected];
+      if (ann.type === 'path') {
+        var bbox = getAnnBounds(ann);
+        var dx = pos.x - annDragX - bbox.x;
+        var dy = pos.y - annDragY - bbox.y;
+        ann.points.forEach(function(p) { p.x += dx; p.y += dy; });
+        redrawAnnotations();
+        var nb = getAnnBounds(ann);
+        annDragX = pos.x - nb.x; annDragY = pos.y - nb.y;
+      } else if (ann.type === 'text') {
+        ann.x = pos.x - annDragX;
+        ann.y = pos.y - annDragY;
+        redrawAnnotations();
+      }
+    }
+  }
+
+  function annOnUp() {
+    if (!annotationMode) return;
+    annPointerDown = false;
+    if (annTool === 'pen' && annDrawing) {
+      annDrawing = false;
+      saveAnnotations();
+    }
+    if (annTool === 'select') annLayerEl.style.cursor = 'grab';
+  }
+
+  function commitAnnText() {
+    var input = $('#annTextInput');
+    if (!input) return;
+    var text = input.value.trim();
+    if (text) {
+      annAnnotations.push({
+        type: 'text', text: text,
+        x: parseFloat(input.dataset.x) || 0,
+        y: parseFloat(input.dataset.y) || 0,
+        color: annColor, size: annSize,
+        page: currentSkin === 'bamboo' ? bambooState.currentPage : undefined
+      });
+      redrawAnnotations();
+      saveAnnotations();
+      showToast('朱批已保存');
+    }
+    input.style.display = 'none';
+    input.value = '';
+  }
+
+  function saveAnnotations() {
+    if (!isLoggedIn() || !currentArticle || !currentArticleId) return;
+    clearTimeout(annSaveTimer);
+    annSaveTimer = setTimeout(async function() {
+      try {
+        await apiCall('/api/articles/' + encodeURIComponent(currentArticleId), {
+          method: 'PUT',
+          body: {
+            title: currentArticle.title, content: currentArticle.content,
+            summary: currentArticle.summary, tags: currentArticle.tags,
+            seal: currentArticle.seal, pinned: currentArticle.pinned,
+            annotations: currentArticle.annotations
+          }
+        });
+      } catch (e) { showToast('朱批保存失败: ' + e.message, 'error'); }
+    }, 500);
+  }
+
+  function toggleAnnotationMode(force) {
+    annotationMode = force !== undefined ? force : !annotationMode;
+    var detail = $('#articleDetailContent'); if (!detail) return;
+    if (annotationMode) {
+      if (!isLoggedIn()) {
+        annotationMode = false;
+        showToast('请先登录后再使用朱批', 'error');
+        $('#loginModal').classList.add('active');
+        return;
+      }
+      detail.classList.add('annotation-mode');
+      var btn = $('#annotateToggle');
+      if (btn) btn.textContent = '退出朱批';
+      ensureAnnCanvas();
+      setAnnTool('pen');
+    } else {
+      detail.classList.remove('annotation-mode');
+      var btn2 = $('#annotateToggle');
+      if (btn2) btn2.textContent = '🖌️ 朱批';
+      annSelected = -1;
+      hideAnnTextInput();
+    }
+  }
+
+  function hideAnnTextInput() {
+    var input = $('#annTextInput');
+    if (input) { input.style.display = 'none'; input.value = ''; }
+  }
   function resetJadeDecorations() {
     var detail = $('#articleDetailContent'); if (!detail) return;
     detail.querySelectorAll('.jade-axis, .jade-seal').forEach(el => el.remove());
@@ -212,26 +483,9 @@
     }
   }
   function updateAnnotateButtonVisibility() {
+    // 朱批现已支持全部皮肤
     var btn = $('#annotateToggle');
-    if (btn) btn.style.display = currentSkin === 'jade' ? 'block' : 'none';
-  }
-  function toggleAnnotationMode(force) {
-    annotationMode = force !== undefined ? force : !annotationMode;
-    var detail = $('#articleDetailContent'); if (!detail) return;
-    if (annotationMode) {
-      detail.classList.add('annotation-mode');
-      var btn = $('#annotateToggle');
-      if (btn) btn.textContent = '退出批注';
-    } else {
-      detail.classList.remove('annotation-mode');
-      var btn2 = $('#annotateToggle');
-      if (btn2) btn2.textContent = '🖌️ 朱批';
-      hideAnnotationInput();
-    }
-  }
-  function hideAnnotationInput() {
-    var box = $('#annotationInputBox');
-    if (box) { box.style.display = 'none'; $('#annotationText').value = ''; }
+    if (btn) btn.style.display = 'block';
   }
 
   // ========== 登录 ==========
@@ -384,7 +638,7 @@
 
     var rect = container.getBoundingClientRect();
     var containerWidth = rect.width - 40;
-    if (containerWidth < 100) containerWidth = 400;
+    if (containerWidth < 100) containerWidth = Math.max(rect.width, 300);
     var columnMinWidth = 150;
     var columnMaxWidth = 280;
     var columnCount = Math.floor(containerWidth / columnMinWidth);
@@ -394,24 +648,30 @@
     var columnWidth = Math.min(columnMaxWidth, containerWidth / columnCount);
     if (columnWidth < columnMinWidth) columnWidth = columnMinWidth;
 
+    // 依据列高估算每列可容纳的字数（竖排：每字约占 fontSize×lineHeight 高度，每列可排数行竖列）
+    var colInnerHeight = rect.height > 50 ? rect.height - 20 : 400;
+    var charUnit = 16 * 2.0; // font-size 1rem × line-height 2.0
+    var charsPerVLine = Math.max(4, Math.floor(colInnerHeight / charUnit));
+    var vLinesPerCol = Math.max(2, Math.floor((columnWidth - 24) / charUnit * 0.9));
+    var capacity = charsPerVLine * vLinesPerCol;
+    if (capacity < 10) capacity = 50;
+
     var totalChars = rawText.length;
     if (totalChars === 0) rawText = '（空）';
-    var charsPerColumn = Math.ceil(totalChars / columnCount);
+    var columnCountNeeded = Math.max(1, Math.ceil(totalChars / capacity));
     var columns = [];
-    for (var i = 0; i < columnCount; i++) {
-      var start = i * charsPerColumn;
-      var end = Math.min((i + 1) * charsPerColumn, totalChars);
+    for (var i = 0; i < columnCountNeeded; i++) {
+      var start = i * capacity;
+      var end = Math.min((i + 1) * capacity, totalChars);
       var text = rawText.substring(start, end);
-      if (text.trim().length === 0 && i < columnCount - 1) text = '　';
+      if (text.trim().length === 0 && i < columnCountNeeded - 1) text = '　';
       columns.push(text);
     }
 
     bambooState.columns = columns;
     bambooState.currentPage = 0;
     bambooState.totalPages = Math.ceil(columns.length / columnCount);
-    var colsPerPage = Math.floor(containerWidth / columnWidth);
-    if (colsPerPage < 1) colsPerPage = 1;
-    bambooState.colsPerPage = colsPerPage;
+    bambooState.colsPerPage = columnCount;
 
     var pageContainer = document.createElement('div');
     pageContainer.className = 'bamboo-page-container';
@@ -517,6 +777,9 @@
     var colWidth = pageContainer.firstChild ? pageContainer.firstChild.offsetWidth : 200;
     pageContainer.style.transform = 'translateX(' + (-offset * colWidth) + 'px)';
 
+    // 翻页后重绘当前卷的朱批
+    if (annCtx) redrawAnnotations();
+
     var controls = container.parentNode.querySelector('.bamboo-controls');
     if (controls) {
       var prevBtn = controls.querySelector('.bamboo-prev');
@@ -567,6 +830,19 @@
       </div>
       <div class="detail-content">${contentHtml}</div>
       <div class="detail-actions"></div>
+      <div class="ann-layer">
+        <canvas class="ann-canvas"></canvas>
+        <div class="ann-toolbar">
+          <button class="btn btn-sm ann-tool active" data-tool="pen" title="画笔朱批">🖌️ 落笔</button>
+          <button class="btn btn-sm ann-tool" data-tool="text" title="文字朱批">📝 题字</button>
+          <button class="btn btn-sm ann-tool" data-tool="select" title="选择/移动">👆 拾取</button>
+          <button class="btn btn-sm ann-tool" data-tool="delete" title="删除朱批">🗑️ 勾销</button>
+          <button class="btn btn-sm ann-tool" data-tool="clear" title="清空朱批">🧹 净卷</button>
+          <input type="color" class="ann-color" value="#ff6b6b" title="朱砂颜色">
+          <input type="range" class="ann-size" min="1" max="10" value="2" title="笔锋粗细">
+          <input type="text" id="annTextInput" class="ann-text-input" placeholder="题字内容，回车确认" maxlength="60" style="display:none;">
+        </div>
+      </div>
       <button class="btn btn-sm annotate-btn" id="annotateToggle">🖌️ 朱批</button>
     `;
 
@@ -580,8 +856,12 @@
 
     var annotateBtn = document.getElementById('annotateToggle');
     if (annotateBtn) annotateBtn.addEventListener('click', () => toggleAnnotationMode());
+    bindAnnotationUI(container);
 
-    if (a.annotations) a.annotations.forEach(ann => addAnnotationTag(ann.x, ann.y, ann.text));
+    if (a.annotations) {
+      // 读者视角：朱批始终可见（画布覆盖层，pointer-events 关闭）
+      ensureAnnCanvas();
+    }
 
     resetJadeDecorations();
     updateAnnotateButtonVisibility();
@@ -608,13 +888,56 @@
     }
   }
 
-  function addAnnotationTag(x, y, text) {
-    var tag = document.createElement('div');
-    tag.className = 'annotation-tag';
-    tag.style.left = x + '%';
-    tag.style.top = y + '%';
-    tag.textContent = text;
-    $('#articleDetailContent').appendChild(tag);
+  // 绑定朱批工具栏与画布事件（每次 renderDetail 重建后调用）
+  function bindAnnotationUI(container) {
+    container.querySelectorAll('.ann-tool[data-tool]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.dataset.tool === 'clear') {
+          if (!confirm('确定清空当前朱批吗？')) return;
+          var page = currentSkin === 'bamboo' ? bambooState.currentPage : null;
+          for (var i = annAnnotations.length - 1; i >= 0; i--) {
+            if (page === null || annAnnotations[i].page === undefined || annAnnotations[i].page === page) annAnnotations.splice(i, 1);
+          }
+          annSelected = -1;
+          redrawAnnotations();
+          saveAnnotations();
+          showToast('朱批已净卷');
+        } else {
+          setAnnTool(btn.dataset.tool);
+        }
+      });
+    });
+    var colorInput = container.querySelector('.ann-color');
+    if (colorInput) colorInput.addEventListener('input', function() { annColor = this.value; });
+    var sizeInput = container.querySelector('.ann-size');
+    if (sizeInput) sizeInput.addEventListener('input', function() { annSize = parseInt(this.value); });
+    var textInput = container.querySelector('#annTextInput');
+    if (textInput) {
+      textInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); commitAnnText(); }
+      });
+      textInput.addEventListener('blur', hideAnnTextInput);
+    }
+    var canvas = container.querySelector('.ann-canvas');
+    if (!canvas) return;
+    canvas.addEventListener('mousedown', annOnDown);
+    canvas.addEventListener('mousemove', annOnMove);
+    canvas.addEventListener('mouseup', annOnUp);
+    canvas.addEventListener('mouseleave', annOnUp);
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      var t = e.touches[0];
+      annOnDown({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive: false });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      var t = e.touches[0];
+      annOnMove({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive: false });
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      annOnUp();
+    }, { passive: false });
   }
 
   // ========== 编辑器 ==========
@@ -1030,59 +1353,13 @@
       ov.addEventListener('click', function(e) { if (e.target === ov) ov.classList.remove('active'); });
     });
 
-    // 批注提交
-    var submitAnnotationBtn = document.getElementById('submitAnnotation');
-    if (submitAnnotationBtn) {
-      submitAnnotationBtn.addEventListener('click', async function() {
-        var text = $('#annotationText').value.trim();
-        if (!text || !currentArticleId) return;
-        // 使用详情接口返回的最新文章数据，避免以列表缓存覆盖服务端内容
-        var article = currentArticle && currentArticle.id === currentArticleId
-          ? currentArticle
-          : articles.find(a => a.id === currentArticleId);
-        if (!article) return;
-        if (!article.annotations) article.annotations = [];
-        if (!currentAnnotationPos) { showToast('请先在正文中点击位置', 'error'); return; }
-        article.annotations.push({ x: currentAnnotationPos.x, y: currentAnnotationPos.y, text });
-        try {
-          await apiCall('/api/articles/' + encodeURIComponent(currentArticleId), {
-            method: 'PUT',
-            body: {
-              title: article.title,
-              content: article.content,
-              summary: article.summary,
-              tags: article.tags,
-              seal: article.seal,
-              pinned: article.pinned,
-              annotations: article.annotations
-            }
-          });
-          showToast('朱批已保存');
-          addAnnotationTag(currentAnnotationPos.x, currentAnnotationPos.y, text);
-        } catch(e) { showToast('保存失败','error'); }
-        $('#annotationModal').classList.remove('active');
-        $('#annotationText').value = '';
-      });
-    }
-    var closeAnnModal = document.getElementById('closeAnnotationModal');
-    if (closeAnnModal) closeAnnModal.addEventListener('click', () => $('#annotationModal').classList.remove('active'));
-
-    // 批注点击位置（原版缺失，补上）
-    var detailContainer = $('#articleDetailContent');
-    if (detailContainer) {
-      detailContainer.addEventListener('click', function(e) {
-        if (!annotationMode) return;
-        var content = e.target.closest('.detail-content');
-        if (!content) return;
-        var rect = detailContainer.getBoundingClientRect();
-        currentAnnotationPos = {
-          x: ((e.clientX - rect.left) / rect.width) * 100,
-          y: ((e.clientY - rect.top) / rect.height) * 100
-        };
-        $('#annotationText').value = '';
-        $('#annotationModal').classList.add('active');
-      });
-    }
+    // 朱批：Esc 退出批注模式；窗口缩放时重设画布
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && annotationMode) toggleAnnotationMode(false);
+    });
+    window.addEventListener('resize', function() {
+      if (annCtx) resizeAnnCanvas();
+    });
   }
 
   function initStylePanel() {
